@@ -1,0 +1,14 @@
+[package]
+name = "fancy-prompt"
+version = "0.1.0"
+authors = ["Jesse Luehrs <doy@tozt.net>"]
+
+[dependencies]
+chrono = "0.4"
+clap = "2.30"
+hostname = "0.1"
+regex = "0.2"
+term = "0.4"
+term_size = "0.3"
+users = "0.6"
+walkdir = "2.1"
