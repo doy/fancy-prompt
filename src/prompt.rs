@@ -1,8 +1,11 @@
 use chrono;
 use regex;
 use std;
+use users;
 
 use std::fmt::Write;
+use std::os::linux::fs::MetadataExt;
+use std::os::unix::fs::PermissionsExt;
 
 use colors;
 use power;
@@ -40,7 +43,7 @@ impl Prompt {
         let host = self.data.hostname.clone().unwrap_or(String::from("???"));
 
         let max_vcs_len = 20; // "g*+?:mybr...nch:+1-1"
-        let (vcs, vcs_err) = self.format_vcs();
+        let (vcs, vcs_color) = self.format_vcs();
         let vcs = vcs.map(|vcs| {
             compress_vcs(&vcs, max_vcs_len)
         });
@@ -77,10 +80,9 @@ impl Prompt {
             &self.data.home,
             max_path_len
         );
-        let path_err = false; // XXX
 
         self.colors.pad(1);
-        self.display_path(&path, path_err, &vcs, vcs_err);
+        self.display_path(&path, &path_color(&self.data.pwd), &vcs, &vcs_color);
 
         self.colors.pad(1);
         self.display_border(max_path_len - path.len() + 1);
@@ -107,15 +109,15 @@ impl Prompt {
     fn display_path(
         &self,
         path: &str,
-        path_err: bool,
+        path_color: &str,
         vcs: &Option<String>,
-        vcs_err: bool
+        vcs_color: &str
     ) {
         self.colors.print_host(&self.data.hostname, "(");
-        self.colors.print(if path_err { "error" } else { "default" }, path);
+        self.colors.print(path_color, path);
         if let &Some(ref vcs) = vcs {
             self.colors.print_host(&self.data.hostname, "|");
-            self.colors.print(if vcs_err { "error" } else { "default" }, &vcs);
+            self.colors.print(vcs_color, &vcs);
         }
         self.colors.print_host(&self.data.hostname, ")");
     }
@@ -183,7 +185,7 @@ impl Prompt {
         self.colors.print_user(&self.data.user, prompt);
     }
 
-    fn format_vcs(&self) -> (Option<String>, bool) {
+    fn format_vcs(&self) -> (Option<String>, String) {
         (self.data.vcs_info.as_ref().map(|vcs_info| {
             let mut vcs = String::new();
 
@@ -238,7 +240,7 @@ impl Prompt {
             }
 
             vcs
-        }), false) // XXX
+        }), String::from("default")) // XXX
     }
 }
 
@@ -261,6 +263,38 @@ fn battery_discharge_color(usage: f64, charging: bool) -> &'static str {
     else {
         "battery_emerg"
     }
+}
+
+fn path_color<T>(path: &Option<T>) -> String
+    where T: AsRef<std::path::Path>
+{
+    path.as_ref().and_then(|path| {
+        std::fs::metadata(path)
+            .map(|stat| {
+                // XXX there really has to be a better option here
+                let euid = users::get_effective_uid();
+                let egid = users::get_effective_gid();
+                let file_uid = stat.st_uid();
+                let file_gid = stat.st_gid();
+                let file_mode = stat.permissions().mode();
+
+                if euid == 0 {
+                    String::from("default")
+                }
+                else if (file_uid == euid) && (file_mode & 0o200 != 0) {
+                    String::from("default")
+                }
+                else if (file_gid == egid) && (file_mode & 0o020 != 0) {
+                    String::from("default")
+                }
+                else if file_mode & 0o002 != 0 {
+                    String::from("default")
+                }
+                else {
+                    String::from("path_not_writable")
+                }
+            }).ok()
+    }).unwrap_or(String::from("path_not_exist"))
 }
 
 fn compress_path<T, U>(

@@ -21,7 +21,13 @@ pub fn terminal_cols() -> Option<usize> {
 }
 
 pub fn pwd() -> Option<std::path::PathBuf> {
-    std::env::current_dir().ok()
+    std::env::current_dir()
+        .ok()
+        .or_else(|| {
+            std::env::var("PWD")
+                .map(|pwd| std::path::PathBuf::from(pwd))
+                .ok()
+        })
 }
 
 pub fn home() -> Option<std::path::PathBuf> {

@@ -30,6 +30,9 @@ impl Colors {
     pub fn new(shell_type: ShellType) -> Colors {
         let mut color_map = std::collections::HashMap::new();
 
+        color_map.insert(String::from("path_not_writable"), term::color::YELLOW);
+        color_map.insert(String::from("path_not_exist"), term::color::RED);
+
         color_map.insert(String::from("battery_warn"), term::color::YELLOW);
         color_map.insert(String::from("battery_crit"), term::color::RED);
         color_map.insert(String::from("battery_emerg"), term::color::BRIGHT_RED);
