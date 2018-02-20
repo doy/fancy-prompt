@@ -32,6 +32,8 @@ impl Colors {
 
         color_map.insert(String::from("path_not_writable"), term::color::YELLOW);
         color_map.insert(String::from("path_not_exist"), term::color::RED);
+        color_map.insert(String::from("vcs_dirty"), term::color::RED);
+        color_map.insert(String::from("vcs_error"), term::color::BRIGHT_RED);
 
         color_map.insert(String::from("battery_warn"), term::color::YELLOW);
         color_map.insert(String::from("battery_crit"), term::color::RED);

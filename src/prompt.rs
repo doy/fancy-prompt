@@ -43,7 +43,7 @@ impl Prompt {
         let host = self.data.hostname.clone().unwrap_or(String::from("???"));
 
         let max_vcs_len = 20; // "g*+?:mybr...nch:+1-1"
-        let (vcs, vcs_color) = self.format_vcs();
+        let vcs = self.format_vcs();
         let vcs = vcs.map(|vcs| {
             compress_vcs(&vcs, max_vcs_len)
         });
@@ -82,7 +82,12 @@ impl Prompt {
         );
 
         self.colors.pad(1);
-        self.display_path(&path, &path_color(&self.data.pwd), &vcs, &vcs_color);
+        self.display_path(
+            &path,
+            &path_color(&self.data.pwd),
+            &vcs,
+            &self.vcs_color(),
+        );
 
         self.colors.pad(1);
         self.display_border(max_path_len - path.len() + 1);
@@ -185,8 +190,8 @@ impl Prompt {
         self.colors.print_user(&self.data.user, prompt);
     }
 
-    fn format_vcs(&self) -> (Option<String>, String) {
-        (self.data.vcs_info.as_ref().map(|vcs_info| {
+    fn format_vcs(&self) -> Option<String> {
+        self.data.vcs_info.as_ref().map(|vcs_info| {
             let mut vcs = String::new();
 
             write!(vcs, "{}", vcs_id(vcs_info.vcs())).unwrap();
@@ -240,7 +245,21 @@ impl Prompt {
             }
 
             vcs
-        }), String::from("default")) // XXX
+        })
+    }
+
+    fn vcs_color(&self) -> String {
+        self.data.vcs_info.as_ref().map(|vcs_info| {
+            if vcs_info.is_error() {
+                String::from("vcs_error")
+            }
+            else if vcs_info.is_dirty() {
+                String::from("vcs_dirty")
+            }
+            else {
+                String::from("default")
+            }
+        }).unwrap_or(String::from("vcs_error"))
     }
 }
 
