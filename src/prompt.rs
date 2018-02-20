@@ -2,15 +2,17 @@ use chrono;
 use regex;
 use std;
 
+use std::fmt::Write;
+
 use colors;
 use power;
+use vcs;
 
 pub struct Prompt {
     colors: colors::Colors,
     data: PromptData,
 }
 
-#[derive(Debug)]
 pub struct PromptData {
     pub shell: colors::ShellType,
     pub error_code: u8,
@@ -22,6 +24,7 @@ pub struct PromptData {
     pub is_root: bool,
     pub time: chrono::DateTime<chrono::Local>,
     pub power_info: power::PowerInfo,
+    pub vcs_info: Option<Box<vcs::VcsInfo>>,
 }
 
 impl Prompt {
@@ -36,13 +39,22 @@ impl Prompt {
         let user = self.data.user.clone().unwrap_or(String::from("???"));
         let host = self.data.hostname.clone().unwrap_or(String::from("???"));
 
+        let max_vcs_len = 20; // "g*+?:mybr...nch:+1-1"
+        let (vcs, vcs_err) = self.format_vcs();
+        let vcs = vcs.map(|vcs| {
+            compress_vcs(&vcs, max_vcs_len)
+        });
+
         let battery_len = 10;
         let cols = self.data.terminal_cols.unwrap_or(80);
 
-        // " (~/a/...cde) ---- {--<=======} doy@lance [19:40:50] "
+        // " (~/a/...cde|g*+?:mybr:+1-1) -- {--<=======} doy@lance [19:40:50] "
         let max_path_len = cols
             - 1                            // " "
-            - 2                            // "()"
+            - vcs
+                .as_ref()
+                .map(|vcs| vcs.len() + 1)  // "|g*+?:mybr:+1-1"
+                .unwrap_or(0) - 2          // "()"
             - 1                            // " "
             - 1                            // "-"
             - 1                            // " "
@@ -65,9 +77,10 @@ impl Prompt {
             &self.data.home,
             max_path_len
         );
+        let path_err = false; // XXX
 
         self.colors.pad(1);
-        self.display_path(&path);
+        self.display_path(&path, path_err, &vcs, vcs_err);
 
         self.colors.pad(1);
         self.display_border(max_path_len - path.len() + 1);
@@ -91,9 +104,19 @@ impl Prompt {
         self.colors.pad(1);
     }
 
-    fn display_path(&self, path: &str) {
+    fn display_path(
+        &self,
+        path: &str,
+        path_err: bool,
+        vcs: &Option<String>,
+        vcs_err: bool
+    ) {
         self.colors.print_host(&self.data.hostname, "(");
-        self.colors.print("default", path);
+        self.colors.print(if path_err { "error" } else { "default" }, path);
+        if let &Some(ref vcs) = vcs {
+            self.colors.print_host(&self.data.hostname, "|");
+            self.colors.print(if vcs_err { "error" } else { "default" }, &vcs);
+        }
         self.colors.print_host(&self.data.hostname, ")");
     }
 
@@ -158,6 +181,64 @@ impl Prompt {
     fn display_prompt(&self) {
         let prompt = if self.data.is_root { "#" } else { "$" };
         self.colors.print_user(&self.data.user, prompt);
+    }
+
+    fn format_vcs(&self) -> (Option<String>, bool) {
+        (self.data.vcs_info.as_ref().map(|vcs_info| {
+            let mut vcs = String::new();
+
+            write!(vcs, "{}", vcs_id(vcs_info.vcs())).unwrap();
+
+            if vcs_info.has_modified_files() {
+                write!(vcs, "*").unwrap();
+            }
+            if vcs_info.has_staged_files() {
+                write!(vcs, "+").unwrap();
+            }
+            if vcs_info.has_new_files() {
+                write!(vcs, "?").unwrap();
+            }
+            if !vcs_info.has_commits() {
+                write!(vcs, "!").unwrap();
+            }
+
+            let branch = vcs_info.branch().map(|branch| {
+                if branch == "master" {
+                    String::new()
+                }
+                else {
+                    branch
+                }
+            }).unwrap_or(String::from("???"));
+            if branch != "" {
+                write!(vcs, ":").unwrap();
+            }
+            write!(vcs, "{}", branch).unwrap();
+
+            if let Some((local, remote)) = vcs_info.remote_branch_diff() {
+                if local > 0 || remote > 0 {
+                    write!(vcs, ":").unwrap();
+                }
+                if local > 0 {
+                    write!(vcs, "+{}", local).unwrap();
+                }
+                if remote > 0 {
+                    write!(vcs, "-{}", remote).unwrap();
+                }
+            }
+            else {
+                write!(vcs, ":-").unwrap();
+            }
+
+            match vcs_info.active_operation() {
+                vcs::ActiveOperation::None => {},
+                op => {
+                    write!(vcs, "({})", active_operation_id(op)).unwrap();
+                }
+            }
+
+            vcs
+        }), false) // XXX
     }
 }
 
@@ -224,5 +305,27 @@ fn compress_path<T, U>(
     }
     else {
         String::from("???")
+    }
+}
+
+fn compress_vcs(vcs: &str, _len: usize) -> String {
+    // XXX
+    String::from(vcs)
+}
+
+fn vcs_id(vcs: vcs::VcsType) -> String {
+    match vcs {
+        vcs::VcsType::Git => String::from("g"),
+    }
+}
+
+fn active_operation_id(op: vcs::ActiveOperation) -> String {
+    match op {
+        vcs::ActiveOperation::None => String::new(),
+        vcs::ActiveOperation::Merge => String::from("m"),
+        vcs::ActiveOperation::Revert => String::from("v"),
+        vcs::ActiveOperation::CherryPick => String::from("c"),
+        vcs::ActiveOperation::Bisect => String::from("b"),
+        vcs::ActiveOperation::Rebase => String::from("r"),
     }
 }

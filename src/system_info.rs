@@ -5,6 +5,7 @@ use std;
 use users;
 
 use power;
+use vcs;
 
 pub fn hostname() -> Option<String> {
     hostname::get_hostname()
@@ -43,4 +44,8 @@ pub fn time() -> chrono::DateTime<chrono::Local> {
 
 pub fn power_info() -> power::PowerInfo {
     power::PowerInfo::new()
+}
+
+pub fn vcs_info() -> Option<Box<vcs::VcsInfo>> {
+    vcs::detect()
 }

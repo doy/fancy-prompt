@@ -1,5 +1,6 @@
 extern crate chrono;
 extern crate clap;
+extern crate git2;
 extern crate hostname;
 extern crate regex;
 extern crate term;
@@ -11,6 +12,7 @@ mod colors;
 mod power;
 mod prompt;
 mod system_info;
+mod vcs;
 
 fn collect_data() -> prompt::PromptData {
     let matches = clap::App::new("fancy-prompt")
@@ -45,6 +47,7 @@ fn collect_data() -> prompt::PromptData {
         is_root: system_info::is_root(),
         time: system_info::time(),
         power_info: system_info::power_info(),
+        vcs_info: system_info::vcs_info(),
     }
 }
 
