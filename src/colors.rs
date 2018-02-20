@@ -127,7 +127,9 @@ impl Colors {
         let mut t = term::stdout().unwrap();
         self.print_color(&mut *t, color);
         write!(t, "{}", text).unwrap();
-        t.reset().unwrap();
+        self.print_wrapped(|| {
+            t.reset().unwrap();
+        })
     }
 
     fn print_color(&self, t: &mut term::StdoutTerminal, color: Option<&term::color::Color>) {
