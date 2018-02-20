@@ -6,48 +6,8 @@ use colors;
 use power;
 
 pub struct Prompt {
-    components_line1: Vec<Box<PromptComponent>>,
-    components_line2: Vec<Box<PromptComponent>>,
-    data: PromptData,
     colors: colors::Colors,
-}
-
-trait PromptComponent {
-    fn display(&self, colors: &colors::Colors, data: &PromptData);
-    fn length(&self, data: &PromptData) -> usize;
-}
-
-struct PromptPath {
-    braces: String,
-}
-
-struct PromptBorder {
-    border: String,
-}
-
-struct PromptBattery {
-    length: usize,
-
-    braces: String,
-
-    full: String,
-    empty: String,
-    charging: String,
-    discharging: String,
-    unknown: String,
-}
-
-struct PromptIdentity {}
-
-struct PromptTime {
-    braces: String,
-}
-
-struct PromptCommandError {}
-
-struct PromptPrompt {
-    user: String,
-    root: String,
+    data: PromptData,
 }
 
 #[derive(Debug)]
@@ -66,245 +26,203 @@ pub struct PromptData {
 
 impl Prompt {
     pub fn new(data: PromptData) -> Prompt {
-        let shell = data.shell.clone();
-        let components_line1: Vec<Box<PromptComponent>> = vec![
-            Box::new(PromptPath { braces: "()".to_string() }),
-            Box::new(PromptBorder { border: "-".to_string() }),
-            Box::new(PromptBattery {
-                length: 10,
-                braces: "{}".to_string(),
-                full: "=".to_string(),
-                empty: "-".to_string(),
-                charging: "<".to_string(),
-                discharging: ">".to_string(),
-                unknown: "?".to_string(),
-            }),
-            Box::new(PromptIdentity {}),
-            Box::new(PromptTime { braces: "[]".to_string() }),
-        ];
-        let components_line2: Vec<Box<PromptComponent>> = vec![
-            Box::new(PromptCommandError {}),
-            Box::new(PromptPrompt {
-                user: "$".to_string(),
-                root: "#".to_string(),
-            }),
-        ];
-
         Prompt {
-            components_line1: components_line1,
-            components_line2: components_line2,
+            colors: colors::Colors::new(data.shell.clone()),
             data: data,
-            colors: colors::Colors::new(shell),
         }
     }
 
     pub fn display(&self) {
-        self.colors.pad(1);
-        for component in self.components_line1.iter() {
-            component.display(&self.colors, &self.data);
-            self.colors.pad(1);
+        let user = self.data.user.clone().unwrap_or(String::from("???"));
+        let host = self.data.hostname.clone().unwrap_or(String::from("???"));
+
+        let battery_len = 10;
+        let cols = self.data.terminal_cols.unwrap_or(80);
+
+        // " (~/a/...cde) ---- {--<=======} doy@lance [19:40:50] "
+        let max_path_len = cols
+            - 1                            // " "
+            - 2                            // "()"
+            - 1                            // " "
+            - 1                            // "-"
+            - 1                            // " "
+            - battery_len - 2              // "{<=========}"
+            - 1                            // " "
+            - user.len() - 1 - host.len()  // "doy@lance"
+            - 1                            // " "
+            - 10                           // "[19:40:50]"
+            - 1;                           // " "
+
+        if max_path_len < 10 {             // "~/a/...cde"
+            panic!(
+                "terminal too small (need at least {} cols)",
+                cols + 10 - max_path_len
+            );
         }
+
+        let path = compress_path(
+            &self.data.pwd,
+            &self.data.home,
+            max_path_len
+        );
+
+        self.colors.pad(1);
+        self.display_path(&path);
+
+        self.colors.pad(1);
+        self.display_border(max_path_len - path.len() + 1);
+        self.colors.pad(1);
+
+        self.display_battery(battery_len);
+        self.colors.pad(1);
+
+        self.display_identity(&user, &host);
+        self.colors.pad(1);
+
+        self.display_time();
+        self.colors.pad(1);
 
         self.colors.newline();
 
-        for component in self.components_line2.iter() {
-            component.display(&self.colors, &self.data);
-            self.colors.pad(1);
-        }
-    }
-}
+        self.display_error_code();
+        self.colors.pad(1);
 
-impl PromptComponent for PromptPath {
-    fn display(&self, colors: &colors::Colors, data: &PromptData) {
-        colors.print_host(
-            &data.hostname,
-            &self.braces[0..1]
-        );
-        if let Some(ref pwd) = data.pwd {
-            colors.print(
-                "default",
-                &compress_path(pwd, &data.home, 20)
-            );
-        }
-        else {
-            colors.print("error", "???");
-        }
-        colors.print_host(
-            &data.hostname,
-            &self.braces[1..2]
-        );
+        self.display_prompt();
+        self.colors.pad(1);
     }
 
-    fn length(&self, data: &PromptData) -> usize {
-        0
-    }
-}
-
-impl PromptComponent for PromptBorder {
-    fn display(&self, colors: &colors::Colors, data: &PromptData) {
-        colors.print("default", &self.border.repeat(20))
+    fn display_path(&self, path: &str) {
+        self.colors.print_host(&self.data.hostname, "(");
+        self.colors.print("default", path);
+        self.colors.print_host(&self.data.hostname, ")");
     }
 
-    fn length(&self, data: &PromptData) -> usize {
-        0
+    fn display_border(&self, len: usize) {
+        self.colors.print("default", &"-".repeat(len));
     }
-}
 
-impl PromptComponent for PromptBattery {
-    fn display(&self, colors: &colors::Colors, data: &PromptData) {
-        colors.print_host(
-            &data.hostname,
-            &self.braces[0..1]
-        );
-
-        if let Some(usage) = data.power_info.battery_usage() {
-            let color = if usage >= 0.8 {
-                "battery_full"
-            }
-            else if data.power_info.charging() {
-                "default"
-            }
-            else if usage >= 0.4 {
-                "default"
-            }
-            else if usage >= 0.15 {
-                "battery_warn"
-            }
-            else if usage >= 0.05 {
-                "battery_crit"
-            }
-            else {
-                "battery_emerg"
-            };
-            let filled = (self.length as f64 * usage).ceil() as usize;
-            let unfilled = self.length - filled;
-
+    fn display_battery(&self, len: usize) {
+        self.colors.print_host(&self.data.hostname, "{");
+        if let Some(battery_usage) = self.data.power_info.battery_usage() {
+            let charging = self.data.power_info.charging();
+            let color = battery_discharge_color(battery_usage, charging);
+            let filled = (battery_usage * (len as f64)).ceil() as usize;
+            let unfilled = len - filled;
             if unfilled > 0 {
-                colors.print(
-                    color,
-                    &self.empty.repeat(unfilled)
-                );
+                self.colors.print(color, &"-".repeat(unfilled));
             }
-
-            if data.power_info.charging() {
-                colors.print(
-                    color,
-                    &self.charging
-                )
+            if charging {
+                self.colors.print("battery_charging", "<");
             }
             else {
-                colors.print(
-                    color,
-                    &self.discharging
-                )
+                self.colors.print(color, ">");
             }
-
             if filled > 1 {
-                colors.print(
-                    color,
-                    &self.full.repeat(filled - 1)
-                )
+                self.colors.print("battery_charging", &"=".repeat(filled - 1));
             }
         }
         else {
-            colors.print(
-                "battery_emerg",
-                &self.unknown.repeat(self.length)
-            )
+            self.colors.print("error", &"?".repeat(len));
         }
-
-        colors.print_host(
-            &data.hostname,
-            &self.braces[1..2]
-        );
+        self.colors.print_host(&self.data.hostname, "}");
     }
 
-    fn length(&self, data: &PromptData) -> usize {
-        0
-    }
-}
-
-impl PromptComponent for PromptIdentity {
-    fn display(&self, colors: &colors::Colors, data: &PromptData) {
-        colors.print_user(
-            &data.user,
-            &data.user.clone().unwrap_or("???".to_string())
-        );
-        colors.print("default", "@");
-        colors.print_host(
-            &data.hostname,
-            &data.hostname.clone().unwrap_or("???".to_string())
-        );
+    fn display_identity(&self, user: &str, host: &str) {
+        self.colors.print_user(&self.data.user, &user);
+        self.colors.print("default", "@");
+        self.colors.print_host(&self.data.hostname, &host);
     }
 
-    fn length(&self, data: &PromptData) -> usize {
-        0
-    }
-}
-
-impl PromptComponent for PromptTime {
-    fn display(&self, colors: &colors::Colors, data: &PromptData) {
-        colors.print_host(
-            &data.hostname,
-            &self.braces[0..1]
-        );
-
-        colors.print(
+    fn display_time(&self) {
+        self.colors.print_host(&self.data.hostname, "[");
+        self.colors.print(
             "default",
-            &format!("{}", data.time.format("%H:%M:%S"))
+            &format!("{}", self.data.time.format("%H:%M:%S"))
         );
-
-        colors.print_host(
-            &data.hostname,
-            &self.braces[1..2]
-        );
+        self.colors.print_host(&self.data.hostname, "]");
     }
 
-    fn length(&self, data: &PromptData) -> usize {
-        0
-    }
-}
-
-impl PromptComponent for PromptCommandError {
-    fn display(&self, colors: &colors::Colors, data: &PromptData) {
-        let color = if data.error_code == 0 {
+    fn display_error_code(&self) {
+        let error_code_color = if self.data.error_code == 0 {
             "default"
         }
         else {
             "error"
         };
-        colors.print(color, &format!("{:03}", data.error_code));
+        self.colors.print(
+            error_code_color,
+            &format!("{:03}", self.data.error_code)
+        );
     }
 
-    fn length(&self, data: &PromptData) -> usize {
-        0
-    }
-}
-
-impl PromptComponent for PromptPrompt {
-    fn display(&self, colors: &colors::Colors, data: &PromptData) {
-        let prompt = if data.is_root {
-            &self.root
-        }
-        else {
-            &self.user
-        };
-        colors.print_user(&data.user, prompt);
-    }
-
-    fn length(&self, data: &PromptData) -> usize {
-        0
+    fn display_prompt(&self) {
+        let prompt = if self.data.is_root { "#" } else { "$" };
+        self.colors.print_user(&self.data.user, prompt);
     }
 }
 
-fn compress_path<T: AsRef<std::path::Path>, U: AsRef<std::path::Path>>(path: T, home: &Option<U>, max_len: u16) -> String {
-    let path_str = path.as_ref().to_string_lossy().into_owned();
-    if let &Some(ref home) = home {
-        let home_str = home.as_ref().to_string_lossy().into_owned();
-        let home_re = regex::Regex::new(&(r"^".to_string() + &regex::escape(&home_str))).unwrap();
-        home_re.replace(&path_str, "~").into_owned()
+fn battery_discharge_color(usage: f64, charging: bool) -> &'static str {
+    if usage >= 0.8 {
+        "battery_full"
+    }
+    else if charging {
+        "default"
+    }
+    else if usage >= 0.4 {
+        "default"
+    }
+    else if usage >= 0.15 {
+        "battery_warn"
+    }
+    else if usage >= 0.05 {
+        "battery_crit"
     }
     else {
+        "battery_emerg"
+    }
+}
+
+fn compress_path<T, U>(
+    path: &Option<T>,
+    home: &Option<U>,
+    len: usize
+) -> String
+    where T: AsRef<std::path::Path>,
+          U: AsRef<std::path::Path>
+{
+    if let &Some(ref path) = path {
+        let mut path_str = path.as_ref().to_string_lossy().into_owned();
+
+        if let &Some(ref home) = home {
+            let home_str = home.as_ref().to_string_lossy().into_owned();
+            let home_re = regex::Regex::new(
+                &(String::from(r"^") + &regex::escape(&home_str))
+            ).unwrap();
+
+            path_str = home_re.replace(&path_str, "~").into_owned();
+        }
+
+        let path_compress_re = regex::Regex::new(
+            r"/([^/])[^/]+/"
+        ).unwrap();
+
+        while path_str.len() > len {
+            let prev_len = path_str.len();
+            path_str = path_compress_re.replace(&path_str, "/$1/").into_owned();
+            if prev_len == path_str.len() {
+                break;
+            }
+        }
+
+        if path_str.len() > len {
+            path_str = String::from(&path_str[..len - 6])
+                + "..."
+                + &path_str[len - 3..len]
+        }
+
         path_str
+    }
+    else {
+        String::from("???")
     }
 }

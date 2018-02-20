@@ -28,14 +28,14 @@ impl Colors {
     pub fn new(shell_type: ShellType) -> Colors {
         let mut color_map = std::collections::HashMap::new();
 
-        color_map.insert("battery_warn".to_string(), term::color::YELLOW);
-        color_map.insert("battery_crit".to_string(), term::color::RED);
-        color_map.insert("battery_emerg".to_string(), term::color::BRIGHT_RED);
-        color_map.insert("battery_full".to_string(), term::color::GREEN);
-        color_map.insert("battery_charging".to_string(), term::color::GREEN);
+        color_map.insert(String::from("battery_warn"), term::color::YELLOW);
+        color_map.insert(String::from("battery_crit"), term::color::RED);
+        color_map.insert(String::from("battery_emerg"), term::color::BRIGHT_RED);
+        color_map.insert(String::from("battery_full"), term::color::GREEN);
+        color_map.insert(String::from("battery_charging"), term::color::GREEN);
 
-        color_map.insert("default".to_string(), term::color::BRIGHT_BLACK);
-        color_map.insert("error".to_string(), term::color::RED);
+        color_map.insert(String::from("default"), term::color::BRIGHT_BLACK);
+        color_map.insert(String::from("error"), term::color::RED);
 
         let unknown_color = term::color::YELLOW;
 
