@@ -361,9 +361,34 @@ fn compress_path<T, U>(
     }
 }
 
-fn compress_vcs(vcs: &str, _len: usize) -> String {
-    // XXX
-    String::from(vcs)
+fn compress_vcs(vcs: &str, len: usize) -> String {
+    if vcs.len() > len {
+        let vcs_parts_re = regex::Regex::new(
+            r"^([^:]+):.*:([^:])$"
+        ).unwrap();
+        vcs_parts_re
+            .captures(vcs)
+            .map(|cap| {
+                let prefix_len = cap.get(1)
+                    .map(|mat| mat.end() - mat.start())
+                    .unwrap_or(0);
+                let suffix_len = cap.get(2)
+                    .map(|mat| mat.end() - mat.start())
+                    .unwrap_or(0);
+                let branch_len = len - prefix_len - suffix_len - 2;
+                let branch_re = regex::Regex::new(
+                    &format!(
+                        r"(:[^:]{{{}}})[^:]*([^:]{{3}}:)",
+                        (branch_len - 6).to_string()
+                    )
+                ).unwrap();
+                branch_re.replace(vcs, "$1...$2").into_owned()
+            })
+            .unwrap_or(vcs.to_string())
+    }
+    else {
+        vcs.to_string()
+    }
 }
 
 fn vcs_id(vcs: vcs::VcsType) -> String {
