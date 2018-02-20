@@ -8,8 +8,10 @@ pub enum ShellType {
     Zsh,
 }
 
+type ColorMap = std::collections::HashMap<String, term::color::Color>;
+
 pub struct Colors {
-    color_map: std::collections::HashMap<String, term::color::Color>,
+    color_map: ColorMap,
     unknown_color: term::color::Color,
     shell_type: ShellType,
 }
@@ -39,10 +41,47 @@ impl Colors {
 
         let unknown_color = term::color::YELLOW;
 
+        Self::read_colors_from_env(&mut color_map);
+
         Colors {
             color_map: color_map,
             unknown_color: unknown_color,
             shell_type: shell_type,
+        }
+    }
+
+    fn read_colors_from_env(color_map: &mut ColorMap) {
+        if let Ok(val) = std::env::var("FANCY_PROMPT_COLORS") {
+            for mapping in val.split(",") {
+                let parts: Vec<_> = mapping.split("=").collect();
+                let (name, color) = (parts[0], parts[1]);
+                color_map.insert(
+                    String::from(name),
+                    Self::color_from_string(color)
+                );
+            }
+        }
+    }
+
+    fn color_from_string(color_name: &str) -> term::color::Color {
+        match color_name {
+            "black" => term::color::BLACK,
+            "blue" => term::color::BLUE,
+            "bright_black" => term::color::BRIGHT_BLACK,
+            "bright_blue" => term::color::BRIGHT_BLUE,
+            "bright_cyan" => term::color::BRIGHT_CYAN,
+            "bright_green" => term::color::BRIGHT_GREEN,
+            "bright_magenta" => term::color::BRIGHT_MAGENTA,
+            "bright_red" => term::color::BRIGHT_RED,
+            "bright_white" => term::color::BRIGHT_WHITE,
+            "bright_yellow" => term::color::BRIGHT_YELLOW,
+            "cyan" => term::color::CYAN,
+            "green" => term::color::GREEN,
+            "magenta" => term::color::MAGENTA,
+            "red" => term::color::RED,
+            "white" => term::color::WHITE,
+            "yellow" => term::color::YELLOW,
+            _ => panic!("unknown color {}", color_name),
         }
     }
 
