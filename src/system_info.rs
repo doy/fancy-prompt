@@ -22,13 +22,13 @@ pub fn terminal_cols() -> Option<usize> {
 
 pub fn pwd() -> Option<std::path::PathBuf> {
     std::env::var("PWD")
-        .map(|pwd| std::path::PathBuf::from(pwd))
+        .map(std::path::PathBuf::from)
         .ok()
 }
 
 pub fn home() -> Option<std::path::PathBuf> {
     std::env::var("HOME")
-        .map(|dir| std::path::PathBuf::from(dir))
+        .map(std::path::PathBuf::from)
         .ok()
 }
 

@@ -59,8 +59,8 @@ impl Colors {
 
     fn read_colors_from_env(color_map: &mut ColorMap) {
         if let Ok(val) = std::env::var("FANCY_PROMPT_COLORS") {
-            for mapping in val.split(",") {
-                let parts: Vec<_> = mapping.split("=").collect();
+            for mapping in val.split(',') {
+                let parts: Vec<_> = mapping.split('=').collect();
                 let (name, color) = (parts[0], parts[1]);
                 color_map.insert(
                     String::from(name),

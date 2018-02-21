@@ -15,7 +15,7 @@ pub struct GitInfo {
 }
 
 impl GitInfo {
-    pub fn new(git: git2::Repository) -> GitInfo {
+    pub fn new(git: &git2::Repository) -> GitInfo {
         let mut modified_statuses = git2::Status::empty();
         modified_statuses.insert(git2::STATUS_WT_DELETED);
         modified_statuses.insert(git2::STATUS_WT_MODIFIED);
@@ -168,7 +168,7 @@ pub fn detect() -> Option<Box<super::VcsInfo>> {
     });
 
     if let Some(git) = git {
-        Some(Box::new(GitInfo::new(git)))
+        Some(Box::new(GitInfo::new(&git)))
     }
     else {
         None

@@ -1,5 +1,6 @@
 mod git;
 
+#[derive(Debug,Copy,Clone)]
 pub enum VcsType {
     Git,
 }

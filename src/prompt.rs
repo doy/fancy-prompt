@@ -39,8 +39,12 @@ impl Prompt {
     }
 
     pub fn display(&self) {
-        let user = self.data.user.clone().unwrap_or(String::from("???"));
-        let host = self.data.hostname.clone().unwrap_or(String::from("???"));
+        let user = self.data.user
+            .clone()
+            .unwrap_or_else(|| String::from("???"));
+        let host = self.data.hostname
+            .clone()
+            .unwrap_or_else(|| String::from("???"));
 
         let max_vcs_len = 20; // "g*+?:mybr...nch:+1-1"
         let vcs = self.format_vcs();
@@ -120,9 +124,9 @@ impl Prompt {
     ) {
         self.colors.print_host(&self.data.hostname, "(");
         self.colors.print(path_color, path);
-        if let &Some(ref vcs) = vcs {
+        if let Some(ref vcs) = *vcs {
             self.colors.print_host(&self.data.hostname, "|");
-            self.colors.print(vcs_color, &vcs);
+            self.colors.print(vcs_color, vcs);
         }
         self.colors.print_host(&self.data.hostname, ")");
     }
@@ -158,9 +162,9 @@ impl Prompt {
     }
 
     fn display_identity(&self, user: &str, host: &str) {
-        self.colors.print_user(&self.data.user, &user);
+        self.colors.print_user(&self.data.user, user);
         self.colors.print("default", "@");
-        self.colors.print_host(&self.data.hostname, &host);
+        self.colors.print_host(&self.data.hostname, host);
     }
 
     fn display_time(&self) {
@@ -216,7 +220,7 @@ impl Prompt {
                 else {
                     branch
                 }
-            }).unwrap_or(String::from("???"));
+            }).unwrap_or_else(|| String::from("???"));
             if branch != "" {
                 write!(vcs, ":").unwrap();
             }
@@ -259,7 +263,7 @@ impl Prompt {
             else {
                 String::from("default")
             }
-        }).unwrap_or(String::from("vcs_error"))
+        }).unwrap_or_else(|| String::from("vcs_error"))
     }
 }
 
@@ -313,7 +317,7 @@ fn path_color<T>(path: &Option<T>) -> String
                     String::from("path_not_writable")
                 }
             }).ok()
-    }).unwrap_or(String::from("path_not_exist"))
+    }).unwrap_or_else(|| String::from("path_not_exist"))
 }
 
 fn compress_path<T, U>(
@@ -324,10 +328,10 @@ fn compress_path<T, U>(
     where T: AsRef<std::path::Path>,
           U: AsRef<std::path::Path>
 {
-    if let &Some(ref path) = path {
+    if let Some(ref path) = *path {
         let mut path_str = path.as_ref().to_string_lossy().into_owned();
 
-        if let &Some(ref home) = home {
+        if let Some(ref home) = *home {
             let home_str = home.as_ref().to_string_lossy().into_owned();
             let home_re = regex::Regex::new(
                 &(String::from(r"^") + &regex::escape(&home_str))
@@ -384,7 +388,7 @@ fn compress_vcs(vcs: &str, len: usize) -> String {
                 ).unwrap();
                 branch_re.replace(vcs, "$1...$2").into_owned()
             })
-            .unwrap_or(vcs.to_string())
+            .unwrap_or_else(|| vcs.to_string())
     }
     else {
         vcs.to_string()
