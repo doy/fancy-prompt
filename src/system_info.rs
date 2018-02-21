@@ -28,7 +28,7 @@ pub fn pwd() -> Option<std::path::PathBuf> {
 
 pub fn home() -> Option<std::path::PathBuf> {
     std::env::var("HOME")
-        .map(|dir| std::path::Path::new(&dir).to_path_buf())
+        .map(|dir| std::path::PathBuf::from(dir))
         .ok()
 }
 
