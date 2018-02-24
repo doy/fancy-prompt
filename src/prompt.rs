@@ -283,6 +283,7 @@ fn format_vcs(vcs_info: &Option<Box<vcs::VcsInfo>>) -> Option<String> {
         }
         if !vcs_info.has_commits() {
             write!(vcs, "!").unwrap();
+            return vcs;
         }
 
         let branch = vcs_info.branch().map(|branch| {
@@ -654,6 +655,23 @@ mod test {
             assert_eq!(
                 format_vcs(&Some(Box::new(test_vcs))),
                 Some(String::from("g*+?:dev:-"))
+            )
+        }
+        {
+            let test_vcs = TestVcs {
+                vcs: vcs::VcsType::Git,
+                has_modified_files: false,
+                has_staged_files: false,
+                has_new_files: false,
+                has_commits: false,
+                active_operation: vcs::ActiveOperation::None,
+                branch: None,
+                remote_branch_diff: None,
+            };
+
+            assert_eq!(
+                format_vcs(&Some(Box::new(test_vcs))),
+                Some(String::from("g!"))
             )
         }
     }
