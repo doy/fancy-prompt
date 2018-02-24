@@ -1,7 +1,7 @@
 use std;
 use term;
 
-#[derive(Debug,Clone)]
+#[derive(Debug, Clone)]
 pub enum ShellType {
     Unknown,
     Bash,
@@ -21,7 +21,7 @@ impl ShellType {
         match shell {
             "bash" => ShellType::Bash,
             "zsh" => ShellType::Zsh,
-            _ => panic!("unknown shell {}", shell)
+            _ => panic!("unknown shell {}", shell),
         }
     }
 }
@@ -32,16 +32,19 @@ impl Colors {
 
         color_map.insert(String::from("user_root"), term::color::BRIGHT_RED);
 
-        color_map.insert(String::from("path_not_writable"), term::color::YELLOW);
+        color_map
+            .insert(String::from("path_not_writable"), term::color::YELLOW);
         color_map.insert(String::from("path_not_exist"), term::color::RED);
         color_map.insert(String::from("vcs_dirty"), term::color::RED);
         color_map.insert(String::from("vcs_error"), term::color::BRIGHT_RED);
 
         color_map.insert(String::from("battery_warn"), term::color::YELLOW);
         color_map.insert(String::from("battery_crit"), term::color::RED);
-        color_map.insert(String::from("battery_emerg"), term::color::BRIGHT_RED);
+        color_map
+            .insert(String::from("battery_emerg"), term::color::BRIGHT_RED);
         color_map.insert(String::from("battery_full"), term::color::GREEN);
-        color_map.insert(String::from("battery_charging"), term::color::GREEN);
+        color_map
+            .insert(String::from("battery_charging"), term::color::GREEN);
 
         color_map.insert(String::from("default"), term::color::BRIGHT_BLACK);
         color_map.insert(String::from("error"), term::color::RED);
@@ -64,7 +67,7 @@ impl Colors {
                 let (name, color) = (parts[0], parts[1]);
                 color_map.insert(
                     String::from(name),
-                    Self::color_from_string(color)
+                    Self::color_from_string(color),
                 );
             }
         }
@@ -108,24 +111,24 @@ impl Colors {
     }
 
     pub fn print_host(&self, host: &Option<String>, text: &str) {
-        let color = host
-            .clone()
-            .and_then(|hostname| {
-                self.color_map.get(&format!("host_{}", hostname))
-            });
+        let color = host.clone().and_then(|hostname| {
+            self.color_map.get(&format!("host_{}", hostname))
+        });
         self.print_with_color(color, text);
     }
 
     pub fn print_user(&self, user: &Option<String>, text: &str) {
-        let color = user
-            .clone()
-            .and_then(|username| {
-                self.color_map.get(&format!("user_{}", username))
-            });
+        let color = user.clone().and_then(|username| {
+            self.color_map.get(&format!("user_{}", username))
+        });
         self.print_with_color(color, text);
     }
 
-    fn print_with_color(&self, color: Option<&term::color::Color>, text: &str) {
+    fn print_with_color(
+        &self,
+        color: Option<&term::color::Color>,
+        text: &str,
+    ) {
         let mut t = term::stdout().unwrap();
         self.print_color(&mut *t, color);
         write!(t, "{}", text).unwrap();
@@ -134,41 +137,54 @@ impl Colors {
         })
     }
 
-    fn print_color(&self, t: &mut term::StdoutTerminal, color: Option<&term::color::Color>) {
+    fn print_color(
+        &self,
+        t: &mut term::StdoutTerminal,
+        color: Option<&term::color::Color>,
+    ) {
         self.print_wrapped(|| {
             let real_color = *color.unwrap_or(&self.unknown_color);
             t.fg(real_color).unwrap();
             match real_color {
                 term::color::BRIGHT_BLACK
-            | term::color::BRIGHT_BLUE
-            | term::color::BRIGHT_CYAN
-            | term::color::BRIGHT_GREEN
-            | term::color::BRIGHT_MAGENTA
-            | term::color::BRIGHT_RED
-            | term::color::BRIGHT_WHITE
-            | term::color::BRIGHT_YELLOW => {
+                | term::color::BRIGHT_BLUE
+                | term::color::BRIGHT_CYAN
+                | term::color::BRIGHT_GREEN
+                | term::color::BRIGHT_MAGENTA
+                | term::color::BRIGHT_RED
+                | term::color::BRIGHT_WHITE
+                | term::color::BRIGHT_YELLOW => {
                     t.attr(term::Attr::Bold).unwrap()
-                },
-                _ => {},
+                }
+                _ => {}
             }
         })
     }
 
     fn print_wrapped<T>(&self, printer: T)
-        where T: FnOnce()
+    where
+        T: FnOnce(),
     {
         match self.shell_type {
-            ShellType::Bash => { print!("{}", "\\["); },
-            ShellType::Zsh => { print!("{}", "%{"); },
-            _ => {},
+            ShellType::Bash => {
+                print!("{}", "\\[");
+            }
+            ShellType::Zsh => {
+                print!("{}", "%{");
+            }
+            _ => {}
         }
 
         printer();
 
         match self.shell_type {
-            ShellType::Bash => { print!("{}", "\\]"); },
-            ShellType::Zsh => { print!("{}", "%}"); },
-            _ => {},
+            ShellType::Bash => {
+                print!("{}", "\\]");
+            }
+            ShellType::Zsh => {
+                print!("{}", "%}");
+            }
+            _ => {}
         }
     }
 }

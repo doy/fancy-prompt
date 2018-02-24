@@ -21,15 +21,11 @@ pub fn terminal_cols() -> Option<usize> {
 }
 
 pub fn pwd() -> Option<std::path::PathBuf> {
-    std::env::var("PWD")
-        .map(std::path::PathBuf::from)
-        .ok()
+    std::env::var("PWD").map(std::path::PathBuf::from).ok()
 }
 
 pub fn home() -> Option<std::path::PathBuf> {
-    std::env::var("HOME")
-        .map(std::path::PathBuf::from)
-        .ok()
+    std::env::var("HOME").map(std::path::PathBuf::from).ok()
 }
 
 pub fn user() -> Option<String> {

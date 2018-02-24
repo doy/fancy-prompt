@@ -1,0 +1,5 @@
+max_width = 78
+control_brace_style = "ClosingNextLine"
+use_small_heuristics = false
+combine_control_expr = false
+struct_lit_single_line = false

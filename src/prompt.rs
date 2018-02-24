@@ -39,18 +39,14 @@ impl Prompt {
     }
 
     pub fn display(&self) {
-        let user = self.data.user
-            .clone()
-            .unwrap_or_else(|| String::from("???"));
-        let host = self.data.hostname
-            .clone()
-            .unwrap_or_else(|| String::from("???"));
+        let user =
+            self.data.user.clone().unwrap_or_else(|| String::from("???"));
+        let host =
+            self.data.hostname.clone().unwrap_or_else(|| String::from("???"));
 
         let max_vcs_len = 20; // "g*+?:mybr...nch:+1-1"
         let vcs = self.format_vcs();
-        let vcs = vcs.map(|vcs| {
-            compress_vcs(&vcs, max_vcs_len)
-        });
+        let vcs = vcs.map(|vcs| compress_vcs(&vcs, max_vcs_len));
 
         let battery_len = 10;
         let cols = self.data.terminal_cols.unwrap_or(80);
@@ -79,11 +75,8 @@ impl Prompt {
             );
         }
 
-        let path = compress_path(
-            &self.data.pwd,
-            &self.data.home,
-            max_path_len
-        );
+        let path =
+            compress_path(&self.data.pwd, &self.data.home, max_path_len);
 
         self.colors.pad(1);
         self.display_path(
@@ -120,7 +113,7 @@ impl Prompt {
         path: &str,
         path_color: &str,
         vcs: &Option<String>,
-        vcs_color: &str
+        vcs_color: &str,
     ) {
         self.colors.print_host(&self.data.hostname, "(");
         self.colors.print(path_color, path);
@@ -152,7 +145,8 @@ impl Prompt {
                 self.colors.print(color, ">");
             }
             if filled > 1 {
-                self.colors.print("battery_charging", &"=".repeat(filled - 1));
+                self.colors
+                    .print("battery_charging", &"=".repeat(filled - 1));
             }
         }
         else {
@@ -171,7 +165,7 @@ impl Prompt {
         self.colors.print_host(&self.data.hostname, "[");
         self.colors.print(
             "default",
-            &format!("{}", self.data.time.format("%H:%M:%S"))
+            &format!("{}", self.data.time.format("%H:%M:%S")),
         );
         self.colors.print_host(&self.data.hostname, "]");
     }
@@ -183,14 +177,17 @@ impl Prompt {
         else {
             "error"
         };
-        self.colors.print(
-            error_code_color,
-            &format!("{:03}", self.data.error_code)
-        );
+        self.colors
+            .print(error_code_color, &format!("{:03}", self.data.error_code));
     }
 
     fn display_prompt(&self) {
-        let prompt = if self.data.is_root { "#" } else { "$" };
+        let prompt = if self.data.is_root {
+            "#"
+        }
+        else {
+            "$"
+        };
         self.colors.print_user(&self.data.user, prompt);
     }
 
@@ -225,35 +222,39 @@ fn battery_discharge_color(usage: f64, charging: bool) -> &'static str {
 }
 
 fn path_color<T>(path: &Option<T>) -> String
-    where T: AsRef<std::path::Path>
+where
+    T: AsRef<std::path::Path>,
 {
-    path.as_ref().and_then(|path| {
-        std::fs::metadata(path)
-            .map(|stat| {
-                // XXX there really has to be a better option here
-                let euid = users::get_effective_uid();
-                let egid = users::get_effective_gid();
-                let file_uid = stat.st_uid();
-                let file_gid = stat.st_gid();
-                let file_mode = stat.permissions().mode();
+    path.as_ref()
+        .and_then(|path| {
+            std::fs::metadata(path)
+                .map(|stat| {
+                    // XXX there really has to be a better option here
+                    let euid = users::get_effective_uid();
+                    let egid = users::get_effective_gid();
+                    let file_uid = stat.st_uid();
+                    let file_gid = stat.st_gid();
+                    let file_mode = stat.permissions().mode();
 
-                if euid == 0 {
-                    String::from("default")
-                }
-                else if (file_uid == euid) && (file_mode & 0o200 != 0) {
-                    String::from("default")
-                }
-                else if (file_gid == egid) && (file_mode & 0o020 != 0) {
-                    String::from("default")
-                }
-                else if file_mode & 0o002 != 0 {
-                    String::from("default")
-                }
-                else {
-                    String::from("path_not_writable")
-                }
-            }).ok()
-    }).unwrap_or_else(|| String::from("path_not_exist"))
+                    if euid == 0 {
+                        String::from("default")
+                    }
+                    else if (file_uid == euid) && (file_mode & 0o200 != 0) {
+                        String::from("default")
+                    }
+                    else if (file_gid == egid) && (file_mode & 0o020 != 0) {
+                        String::from("default")
+                    }
+                    else if file_mode & 0o002 != 0 {
+                        String::from("default")
+                    }
+                    else {
+                        String::from("path_not_writable")
+                    }
+                })
+                .ok()
+        })
+        .unwrap_or_else(|| String::from("path_not_exist"))
 }
 
 fn format_vcs(vcs_info: &Option<Box<vcs::VcsInfo>>) -> Option<String> {
@@ -276,14 +277,17 @@ fn format_vcs(vcs_info: &Option<Box<vcs::VcsInfo>>) -> Option<String> {
             return vcs;
         }
 
-        let branch = vcs_info.branch().map(|branch| {
-            if branch == "master" {
-                String::new()
-            }
-            else {
-                branch
-            }
-        }).unwrap_or_else(|| String::from("???"));
+        let branch = vcs_info
+            .branch()
+            .map(|branch| {
+                if branch == "master" {
+                    String::new()
+                }
+                else {
+                    branch
+                }
+            })
+            .unwrap_or_else(|| String::from("???"));
         if branch != "" {
             write!(vcs, ":").unwrap();
         }
@@ -305,7 +309,7 @@ fn format_vcs(vcs_info: &Option<Box<vcs::VcsInfo>>) -> Option<String> {
         }
 
         match vcs_info.active_operation() {
-            vcs::ActiveOperation::None => {},
+            vcs::ActiveOperation::None => {}
             op => {
                 write!(vcs, "({})", active_operation_id(op)).unwrap();
             }
@@ -316,26 +320,30 @@ fn format_vcs(vcs_info: &Option<Box<vcs::VcsInfo>>) -> Option<String> {
 }
 
 fn vcs_color(vcs_info: &Option<Box<vcs::VcsInfo>>) -> String {
-    vcs_info.as_ref().map(|vcs_info| {
-        if vcs_info.is_error() {
-            String::from("vcs_error")
-        }
-        else if vcs_info.is_dirty() {
-            String::from("vcs_dirty")
-        }
-        else {
-            String::from("default")
-        }
-    }).unwrap_or_else(|| String::from("vcs_error"))
+    vcs_info
+        .as_ref()
+        .map(|vcs_info| {
+            if vcs_info.is_error() {
+                String::from("vcs_error")
+            }
+            else if vcs_info.is_dirty() {
+                String::from("vcs_dirty")
+            }
+            else {
+                String::from("default")
+            }
+        })
+        .unwrap_or_else(|| String::from("vcs_error"))
 }
 
 fn compress_path<T, U>(
     path: &Option<T>,
     home: &Option<U>,
-    len: usize
+    len: usize,
 ) -> String
-    where T: AsRef<std::path::Path>,
-          U: AsRef<std::path::Path>
+where
+    T: AsRef<std::path::Path>,
+    U: AsRef<std::path::Path>,
 {
     if let Some(ref path) = *path {
         let mut path_str = path.as_ref().to_string_lossy().into_owned();
@@ -343,27 +351,25 @@ fn compress_path<T, U>(
         if let Some(ref home) = *home {
             let home_str = home.as_ref().to_string_lossy().into_owned();
             let home_re = regex::Regex::new(
-                &(String::from(r"^") + &regex::escape(&home_str))
+                &(String::from(r"^") + &regex::escape(&home_str)),
             ).unwrap();
 
             path_str = home_re.replace(&path_str, "~").into_owned();
         }
 
-        let path_compress_re = regex::Regex::new(
-            r"/([^/])[^/]+/"
-        ).unwrap();
+        let path_compress_re = regex::Regex::new(r"/([^/])[^/]+/").unwrap();
 
         while path_str.len() > len {
             let prev_len = path_str.len();
-            path_str = path_compress_re.replace(&path_str, "/$1/").into_owned();
+            path_str =
+                path_compress_re.replace(&path_str, "/$1/").into_owned();
             if prev_len == path_str.len() {
                 break;
             }
         }
 
         if path_str.len() > len {
-            path_str = String::from(&path_str[..len - 6])
-                + "..."
+            path_str = String::from(&path_str[..len - 6]) + "..."
                 + &path_str[path_str.len() - 3..]
         }
 
@@ -376,9 +382,8 @@ fn compress_path<T, U>(
 
 fn compress_vcs(vcs: &str, len: usize) -> String {
     if vcs.len() > len {
-        let vcs_parts_re = regex::Regex::new(
-            r"^([^:]+):.*?(?::([^:]+))?$"
-        ).unwrap();
+        let vcs_parts_re =
+            regex::Regex::new(r"^([^:]+):.*?(?::([^:]+))?$").unwrap();
         vcs_parts_re
             .captures(vcs)
             .map(|cap| {
@@ -389,12 +394,10 @@ fn compress_vcs(vcs: &str, len: usize) -> String {
                     .map(|mat| mat.end() - mat.start() + 1)
                     .unwrap_or(0);
                 let branch_len = len - prefix_len - suffix_len;
-                let branch_re = regex::Regex::new(
-                    &format!(
-                        r"(:[^:]{{{}}})[^:]*([^:]{{3}}:?)",
-                        (branch_len - 6).to_string()
-                    )
-                ).unwrap();
+                let branch_re = regex::Regex::new(&format!(
+                    r"(:[^:]{{{}}})[^:]*([^:]{{3}}:?)",
+                    (branch_len - 6).to_string()
+                )).unwrap();
                 branch_re.replace(vcs, "$1...$2").into_owned()
             })
             .unwrap_or_else(|| vcs.to_string())
@@ -475,12 +478,12 @@ mod test {
                 "~/coding/fancy-prompt",
                 "~/coding/fancy-prompt",
                 "~/coding/fancy-prompt",
-                "~/c/fancy-prompt",      // 20
+                "~/c/fancy-prompt", // 20
                 "~/c/fancy-prompt",
                 "~/c/fancy-prompt",
                 "~/c/fancy-prompt",
                 "~/c/fancy-prompt",
-                "~/c/fancy...mpt",       // 15
+                "~/c/fancy...mpt", // 15
                 "~/c/fanc...mpt",
                 "~/c/fan...mpt",
                 "~/c/fa...mpt",
@@ -572,10 +575,7 @@ mod test {
     #[test]
     fn test_format_vcs() {
         {
-            assert_eq!(
-                format_vcs(&None),
-                None
-            )
+            assert_eq!(format_vcs(&None), None)
         }
         {
             let test_vcs = TestVcs {

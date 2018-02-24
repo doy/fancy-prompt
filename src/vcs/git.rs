@@ -33,7 +33,8 @@ impl GitInfo {
 
         let mut status_options = git2::StatusOptions::new();
         status_options.include_untracked(true);
-        if true { // XXX
+        if true {
+            // XXX
             status_options.update_index(true);
         }
         else {
@@ -60,48 +61,54 @@ impl GitInfo {
 
         let head = git.head();
         let commits = head.is_ok();
-        let branch = head.ok()
-            .and_then(|head| {
-                if head.is_branch() {
-                    head.shorthand().map(|s| s.to_string())
-                }
-                else {
-                    head.resolve().ok()
-                        .and_then(|head| head.target())
-                        .map(|oid| {
-                            let mut sha = String::new();
-                            for b in oid.as_bytes().iter() {
-                                write!(sha, "{:02x}", b).unwrap();
-                            }
-                            sha.truncate(7);
-                            sha
-                        })
-                }
-            });
+        let branch = head.ok().and_then(|head| {
+            if head.is_branch() {
+                head.shorthand().map(|s| s.to_string())
+            }
+            else {
+                head.resolve().ok().and_then(|head| head.target()).map(
+                    |oid| {
+                        let mut sha = String::new();
+                        for b in oid.as_bytes().iter() {
+                            write!(sha, "{:02x}", b).unwrap();
+                        }
+                        sha.truncate(7);
+                        sha
+                    },
+                )
+            }
+        });
 
         let active_operation = match git.state() {
-            git2::RepositoryState::Merge
-                => super::ActiveOperation::Merge,
+            git2::RepositoryState::Merge => super::ActiveOperation::Merge,
             git2::RepositoryState::Revert
-                | git2::RepositoryState::RevertSequence
-                => super::ActiveOperation::Revert,
+            | git2::RepositoryState::RevertSequence => {
+                super::ActiveOperation::Revert
+            }
             git2::RepositoryState::CherryPick
-                | git2::RepositoryState::CherryPickSequence
-                => super::ActiveOperation::CherryPick,
-            git2::RepositoryState::Bisect
-                => super::ActiveOperation::Bisect,
+            | git2::RepositoryState::CherryPickSequence => {
+                super::ActiveOperation::CherryPick
+            }
+            git2::RepositoryState::Bisect => super::ActiveOperation::Bisect,
             git2::RepositoryState::Rebase
-                | git2::RepositoryState::RebaseInteractive
-                | git2::RepositoryState::RebaseMerge
-                => super::ActiveOperation::Rebase,
+            | git2::RepositoryState::RebaseInteractive
+            | git2::RepositoryState::RebaseMerge => {
+                super::ActiveOperation::Rebase
+            }
             _ => super::ActiveOperation::None,
         };
 
-        let remote_branch_diff = git.head().ok()
-            .and_then(|head| if head.is_branch() { Some(head) } else { None })
+        let remote_branch_diff = git.head()
+            .ok()
             .and_then(|head| {
-                head.resolve().ok()
+                if head.is_branch() {
+                    Some(head)
+                }
+                else {
+                    None
+                }
             })
+            .and_then(|head| head.resolve().ok())
             .map(|head| {
                 (head.target(), head.shorthand().map(|s| s.to_string()))
             })
@@ -109,10 +116,12 @@ impl GitInfo {
                 head_id.and_then(|head_id| {
                     name.and_then(|name| {
                         git.refname_to_id(
-                            &(String::from("refs/remotes/origin/") + &name)
-                        ).ok().and_then(|remote_id| {
-                            git.graph_ahead_behind(head_id, remote_id).ok()
-                        })
+                            &(String::from("refs/remotes/origin/") + &name),
+                        ).ok()
+                            .and_then(|remote_id| {
+                                git.graph_ahead_behind(head_id, remote_id)
+                                    .ok()
+                            })
                     })
                 })
             });
@@ -164,9 +173,9 @@ impl super::VcsInfo for GitInfo {
 }
 
 pub fn detect() -> Option<Box<super::VcsInfo>> {
-    let git = std::env::current_dir().ok().and_then(|pwd| {
-        git2::Repository::discover(pwd).ok()
-    });
+    let git = std::env::current_dir()
+        .ok()
+        .and_then(|pwd| git2::Repository::discover(pwd).ok());
 
     if let Some(git) = git {
         Some(Box::new(GitInfo::new(&git)))

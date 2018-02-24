@@ -1,11 +1,11 @@
 mod git;
 
-#[derive(Debug,Copy,Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum VcsType {
     Git,
 }
 
-#[derive(Debug,Copy,Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum ActiveOperation {
     None,
     Merge,
@@ -27,12 +27,9 @@ pub trait VcsInfo {
 
     fn is_dirty(&self) -> bool {
         let diff = self.remote_branch_diff();
-        self.has_modified_files()
-            || self.has_staged_files()
-            || self.has_new_files()
-            || !diff.is_some()
-            || diff
-                .map(|(local, remote)| local > 0 || remote > 0)
+        self.has_modified_files() || self.has_staged_files()
+            || self.has_new_files() || !diff.is_some()
+            || diff.map(|(local, remote)| local > 0 || remote > 0)
                 .unwrap_or(false)
     }
 

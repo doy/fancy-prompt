@@ -5,7 +5,7 @@ use std::io::Read;
 
 // XXX maybe extract this out into a separate crate?
 
-#[derive(PartialEq,Eq,Debug,Clone)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 enum PowerSupplyType {
     AC,
     Battery,
@@ -16,7 +16,7 @@ pub struct PowerInfo {
     power_supplies: Vec<PowerSupplyInfo>,
 }
 
-#[derive(Debug,Clone)]
+#[derive(Debug, Clone)]
 struct PowerSupplyInfo {
     name: String,
     ty: PowerSupplyType,
@@ -28,10 +28,15 @@ struct PowerSupplyInfo {
 impl PowerInfo {
     pub fn new() -> PowerInfo {
         let mut power_supplies = vec![];
-        for entry in walkdir::WalkDir::new("/sys/class/power_supply/").min_depth(1).max_depth(1).follow_links(true) {
+        for entry in walkdir::WalkDir::new("/sys/class/power_supply/")
+            .min_depth(1)
+            .max_depth(1)
+            .follow_links(true)
+        {
             let entry = entry.unwrap();
 
-            let name = entry.path()
+            let name = entry
+                .path()
                 .file_name()
                 .unwrap()
                 .to_string_lossy()
@@ -41,18 +46,16 @@ impl PowerInfo {
                 .expect("couldn't find power supply type");
             let full = slurp(entry.path().join("energy_full"));
             let now = slurp(entry.path().join("energy_now"));
-            let online = slurp(entry.path().join("online"))
-                .map(|n: u8| n != 0);
+            let online =
+                slurp(entry.path().join("online")).map(|n: u8| n != 0);
 
-            power_supplies.push(
-                PowerSupplyInfo {
-                    name: name,
-                    ty: ty,
-                    energy_now: now,
-                    energy_full: full,
-                    online: online,
-                }
-            )
+            power_supplies.push(PowerSupplyInfo {
+                name: name,
+                ty: ty,
+                energy_now: now,
+                energy_full: full,
+                online: online,
+            })
         }
 
         PowerInfo {
@@ -117,21 +120,20 @@ impl PowerSupplyType {
         match ty {
             "Mains" => PowerSupplyType::AC,
             "Battery" => PowerSupplyType::Battery,
-            _ => panic!("unknown power supply type {}", ty)
+            _ => panic!("unknown power supply type {}", ty),
         }
     }
 }
 
 fn slurp<T, U>(path: U) -> Option<T>
-    where T: std::str::FromStr,
-          U: AsRef<std::path::Path>
+where
+    T: std::str::FromStr,
+    U: AsRef<std::path::Path>,
 {
     let mut contents = String::new();
-    std::fs::File::open(path)
-        .ok()
-        .and_then(|mut fh| {
-            fh.read_to_string(&mut contents)
-                .ok()
-                .and_then(|_| contents.trim().parse().ok())
-        })
+    std::fs::File::open(path).ok().and_then(|mut fh| {
+        fh.read_to_string(&mut contents)
+            .ok()
+            .and_then(|_| contents.trim().parse().ok())
+    })
 }
