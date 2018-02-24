@@ -411,3 +411,113 @@ fn active_operation_id(op: vcs::ActiveOperation) -> String {
         vcs::ActiveOperation::Rebase => String::from("r"),
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_compress_path() {
+        {
+            let home = &Some("/home/doy");
+            let path = &Some("/home/doy/coding/fancy-prompt");
+            let expecteds = vec![
+                "~/coding/fancy-prompt", // 25
+                "~/coding/fancy-prompt",
+                "~/coding/fancy-prompt",
+                "~/coding/fancy-prompt",
+                "~/coding/fancy-prompt",
+                "~/c/fancy-prompt",      // 20
+                "~/c/fancy-prompt",
+                "~/c/fancy-prompt",
+                "~/c/fancy-prompt",
+                "~/c/fancy-prompt",
+                "~/c/fancy...mpt",       // 15
+                "~/c/fanc...mpt",
+                "~/c/fan...mpt",
+                "~/c/fa...mpt",
+                "~/c/f...mpt",
+                "~/c/...mpt",
+            ];
+            for (i, &expected) in expecteds.iter().enumerate() {
+                assert_eq!(compress_path(path, home, 25 - i), expected);
+            }
+        }
+    }
+
+    #[test]
+    fn test_compress_vcs() {
+        {
+            let vcs = "g:this-is-a-branch:-";
+            let expecteds = vec![
+                "g:this-is-a-branch:-", // 25
+                "g:this-is-a-branch:-",
+                "g:this-is-a-branch:-",
+                "g:this-is-a-branch:-",
+                "g:this-is-a-branch:-",
+                "g:this-is-a-branch:-",
+                "g:this-is-a...nch:-", // 19
+                "g:this-is-...nch:-",
+                "g:this-is...nch:-",
+                "g:this-i...nch:-",
+                "g:this-...nch:-",
+                "g:this...nch:-",
+                "g:thi...nch:-",
+                "g:th...nch:-",
+                "g:t...nch:-",
+                "g:...nch:-",
+            ];
+            for (i, &expected) in expecteds.iter().enumerate() {
+                assert_eq!(compress_vcs(vcs, 25 - i), expected);
+            }
+        }
+        {
+            let vcs = "g:this-is-a-branch";
+            let expecteds = vec![
+                "g:this-is-a-branch", // 23
+                "g:this-is-a-branch",
+                "g:this-is-a-branch",
+                "g:this-is-a-branch",
+                "g:this-is-a-branch",
+                "g:this-is-a-branch",
+                "g:this-is-a...nch", // 17
+                "g:this-is-...nch",
+                "g:this-is...nch",
+                "g:this-i...nch",
+                "g:this-...nch",
+                "g:this...nch",
+                "g:thi...nch",
+                "g:th...nch",
+                "g:t...nch",
+                "g:...nch",
+            ];
+            for (i, &expected) in expecteds.iter().enumerate() {
+                assert_eq!(compress_vcs(vcs, 23 - i), expected);
+            }
+        }
+        {
+            let vcs = "g*:this-is-a-branch:+1-14(m)";
+            let expecteds = vec![
+                "g*:this-is-a-branch:+1-14(m)", // 33
+                "g*:this-is-a-branch:+1-14(m)",
+                "g*:this-is-a-branch:+1-14(m)",
+                "g*:this-is-a-branch:+1-14(m)",
+                "g*:this-is-a-branch:+1-14(m)",
+                "g*:this-is-a-branch:+1-14(m)",
+                "g*:this-is-a...nch:+1-14(m)", // 27
+                "g*:this-is-...nch:+1-14(m)",
+                "g*:this-is...nch:+1-14(m)",
+                "g*:this-i...nch:+1-14(m)",
+                "g*:this-...nch:+1-14(m)",
+                "g*:this...nch:+1-14(m)",
+                "g*:thi...nch:+1-14(m)",
+                "g*:th...nch:+1-14(m)",
+                "g*:t...nch:+1-14(m)",
+                "g*:...nch:+1-14(m)",
+            ];
+            for (i, &expected) in expecteds.iter().enumerate() {
+                assert_eq!(compress_vcs(vcs, 33 - i), expected);
+            }
+        }
+    }
+}
