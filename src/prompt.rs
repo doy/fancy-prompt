@@ -195,61 +195,7 @@ impl Prompt {
     }
 
     fn format_vcs(&self) -> Option<String> {
-        self.data.vcs_info.as_ref().map(|vcs_info| {
-            let mut vcs = String::new();
-
-            write!(vcs, "{}", vcs_id(vcs_info.vcs())).unwrap();
-
-            if vcs_info.has_modified_files() {
-                write!(vcs, "*").unwrap();
-            }
-            if vcs_info.has_staged_files() {
-                write!(vcs, "+").unwrap();
-            }
-            if vcs_info.has_new_files() {
-                write!(vcs, "?").unwrap();
-            }
-            if !vcs_info.has_commits() {
-                write!(vcs, "!").unwrap();
-            }
-
-            let branch = vcs_info.branch().map(|branch| {
-                if branch == "master" {
-                    String::new()
-                }
-                else {
-                    branch
-                }
-            }).unwrap_or_else(|| String::from("???"));
-            if branch != "" {
-                write!(vcs, ":").unwrap();
-            }
-            write!(vcs, "{}", branch).unwrap();
-
-            if let Some((local, remote)) = vcs_info.remote_branch_diff() {
-                if local > 0 || remote > 0 {
-                    write!(vcs, ":").unwrap();
-                }
-                if local > 0 {
-                    write!(vcs, "+{}", local).unwrap();
-                }
-                if remote > 0 {
-                    write!(vcs, "-{}", remote).unwrap();
-                }
-            }
-            else {
-                write!(vcs, ":-").unwrap();
-            }
-
-            match vcs_info.active_operation() {
-                vcs::ActiveOperation::None => {},
-                op => {
-                    write!(vcs, "({})", active_operation_id(op)).unwrap();
-                }
-            }
-
-            vcs
-        })
+        format_vcs(&self.data.vcs_info)
     }
 
     fn vcs_color(&self) -> String {
@@ -318,6 +264,64 @@ fn path_color<T>(path: &Option<T>) -> String
                 }
             }).ok()
     }).unwrap_or_else(|| String::from("path_not_exist"))
+}
+
+fn format_vcs(vcs_info: &Option<Box<vcs::VcsInfo>>) -> Option<String> {
+    vcs_info.as_ref().map(|vcs_info| {
+        let mut vcs = String::new();
+
+        write!(vcs, "{}", vcs_id(vcs_info.vcs())).unwrap();
+
+        if vcs_info.has_modified_files() {
+            write!(vcs, "*").unwrap();
+        }
+        if vcs_info.has_staged_files() {
+            write!(vcs, "+").unwrap();
+        }
+        if vcs_info.has_new_files() {
+            write!(vcs, "?").unwrap();
+        }
+        if !vcs_info.has_commits() {
+            write!(vcs, "!").unwrap();
+        }
+
+        let branch = vcs_info.branch().map(|branch| {
+            if branch == "master" {
+                String::new()
+            }
+            else {
+                branch
+            }
+        }).unwrap_or_else(|| String::from("???"));
+        if branch != "" {
+            write!(vcs, ":").unwrap();
+        }
+        write!(vcs, "{}", branch).unwrap();
+
+        if let Some((local, remote)) = vcs_info.remote_branch_diff() {
+            if local > 0 || remote > 0 {
+                write!(vcs, ":").unwrap();
+            }
+            if local > 0 {
+                write!(vcs, "+{}", local).unwrap();
+            }
+            if remote > 0 {
+                write!(vcs, "-{}", remote).unwrap();
+            }
+        }
+        else {
+            write!(vcs, ":-").unwrap();
+        }
+
+        match vcs_info.active_operation() {
+            vcs::ActiveOperation::None => {},
+            op => {
+                write!(vcs, "({})", active_operation_id(op)).unwrap();
+            }
+        }
+
+        vcs
+    })
 }
 
 fn compress_path<T, U>(
@@ -415,6 +419,44 @@ fn active_operation_id(op: vcs::ActiveOperation) -> String {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    struct TestVcs {
+        vcs: vcs::VcsType,
+        has_modified_files: bool,
+        has_staged_files: bool,
+        has_new_files: bool,
+        has_commits: bool,
+        active_operation: vcs::ActiveOperation,
+        branch: Option<String>,
+        remote_branch_diff: Option<(usize, usize)>,
+    }
+
+    impl vcs::VcsInfo for TestVcs {
+        fn vcs(&self) -> vcs::VcsType {
+            self.vcs
+        }
+        fn has_modified_files(&self) -> bool {
+            self.has_modified_files
+        }
+        fn has_staged_files(&self) -> bool {
+            self.has_staged_files
+        }
+        fn has_new_files(&self) -> bool {
+            self.has_new_files
+        }
+        fn has_commits(&self) -> bool {
+            self.has_commits
+        }
+        fn active_operation(&self) -> vcs::ActiveOperation {
+            self.active_operation
+        }
+        fn branch(&self) -> Option<String> {
+            self.branch.clone()
+        }
+        fn remote_branch_diff(&self) -> Option<(usize, usize)> {
+            self.remote_branch_diff
+        }
+    }
 
     #[test]
     fn test_compress_path() {
@@ -518,6 +560,101 @@ mod test {
             for (i, &expected) in expecteds.iter().enumerate() {
                 assert_eq!(compress_vcs(vcs, 33 - i), expected);
             }
+        }
+    }
+
+    #[test]
+    fn test_format_vcs() {
+        {
+            assert_eq!(
+                format_vcs(&None),
+                None
+            )
+        }
+        {
+            let test_vcs = TestVcs {
+                vcs: vcs::VcsType::Git,
+                has_modified_files: false,
+                has_staged_files: false,
+                has_new_files: false,
+                has_commits: true,
+                active_operation: vcs::ActiveOperation::None,
+                branch: Some(String::from("master")),
+                remote_branch_diff: Some((0, 0)),
+            };
+
+            assert_eq!(
+                format_vcs(&Some(Box::new(test_vcs))),
+                Some(String::from("g"))
+            )
+        }
+        {
+            let test_vcs = TestVcs {
+                vcs: vcs::VcsType::Git,
+                has_modified_files: false,
+                has_staged_files: false,
+                has_new_files: false,
+                has_commits: true,
+                active_operation: vcs::ActiveOperation::None,
+                branch: Some(String::from("master")),
+                remote_branch_diff: None,
+            };
+
+            assert_eq!(
+                format_vcs(&Some(Box::new(test_vcs))),
+                Some(String::from("g:-"))
+            )
+        }
+        {
+            let test_vcs = TestVcs {
+                vcs: vcs::VcsType::Git,
+                has_modified_files: false,
+                has_staged_files: false,
+                has_new_files: false,
+                has_commits: true,
+                active_operation: vcs::ActiveOperation::None,
+                branch: Some(String::from("dev")),
+                remote_branch_diff: None,
+            };
+
+            assert_eq!(
+                format_vcs(&Some(Box::new(test_vcs))),
+                Some(String::from("g:dev:-"))
+            )
+        }
+        {
+            let test_vcs = TestVcs {
+                vcs: vcs::VcsType::Git,
+                has_modified_files: true,
+                has_staged_files: true,
+                has_new_files: true,
+                has_commits: true,
+                active_operation: vcs::ActiveOperation::None,
+                branch: Some(String::from("master")),
+                remote_branch_diff: None,
+            };
+
+            assert_eq!(
+                format_vcs(&Some(Box::new(test_vcs))),
+                Some(String::from("g*+?:-"))
+            )
+        }
+        {
+            let test_vcs = TestVcs {
+                vcs: vcs::VcsType::Git,
+                has_modified_files: true,
+                has_staged_files: true,
+                has_new_files: true,
+                has_commits: true,
+                active_operation: vcs::ActiveOperation::None,
+                branch: Some(String::from("dev")),
+                remote_branch_diff: None,
+            };
+
+            assert_eq!(
+                format_vcs(&Some(Box::new(test_vcs))),
+                Some(String::from("g*+?:dev:-"))
+            )
         }
     }
 }
