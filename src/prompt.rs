@@ -199,17 +199,7 @@ impl Prompt {
     }
 
     fn vcs_color(&self) -> String {
-        self.data.vcs_info.as_ref().map(|vcs_info| {
-            if vcs_info.is_error() {
-                String::from("vcs_error")
-            }
-            else if vcs_info.is_dirty() {
-                String::from("vcs_dirty")
-            }
-            else {
-                String::from("default")
-            }
-        }).unwrap_or_else(|| String::from("vcs_error"))
+        vcs_color(&self.data.vcs_info)
     }
 }
 
@@ -325,6 +315,20 @@ fn format_vcs(vcs_info: &Option<Box<vcs::VcsInfo>>) -> Option<String> {
     })
 }
 
+fn vcs_color(vcs_info: &Option<Box<vcs::VcsInfo>>) -> String {
+    vcs_info.as_ref().map(|vcs_info| {
+        if vcs_info.is_error() {
+            String::from("vcs_error")
+        }
+        else if vcs_info.is_dirty() {
+            String::from("vcs_dirty")
+        }
+        else {
+            String::from("default")
+        }
+    }).unwrap_or_else(|| String::from("vcs_error"))
+}
+
 fn compress_path<T, U>(
     path: &Option<T>,
     home: &Option<U>,
@@ -421,6 +425,7 @@ fn active_operation_id(op: vcs::ActiveOperation) -> String {
 mod test {
     use super::*;
 
+    #[derive(Clone)]
     struct TestVcs {
         vcs: vcs::VcsType,
         has_modified_files: bool,
@@ -585,9 +590,34 @@ mod test {
             };
 
             assert_eq!(
-                format_vcs(&Some(Box::new(test_vcs))),
+                format_vcs(&Some(Box::new(test_vcs.clone()))),
                 Some(String::from("g"))
-            )
+            );
+            assert_eq!(
+                vcs_color(&Some(Box::new(test_vcs.clone()))),
+                String::from("default")
+            );
+        }
+        {
+            let test_vcs = TestVcs {
+                vcs: vcs::VcsType::Git,
+                has_modified_files: false,
+                has_staged_files: false,
+                has_new_files: false,
+                has_commits: true,
+                active_operation: vcs::ActiveOperation::None,
+                branch: Some(String::from("dev")),
+                remote_branch_diff: Some((0, 0)),
+            };
+
+            assert_eq!(
+                format_vcs(&Some(Box::new(test_vcs.clone()))),
+                Some(String::from("g:dev"))
+            );
+            assert_eq!(
+                vcs_color(&Some(Box::new(test_vcs.clone()))),
+                String::from("default")
+            );
         }
         {
             let test_vcs = TestVcs {
@@ -602,9 +632,13 @@ mod test {
             };
 
             assert_eq!(
-                format_vcs(&Some(Box::new(test_vcs))),
+                format_vcs(&Some(Box::new(test_vcs.clone()))),
                 Some(String::from("g:-"))
-            )
+            );
+            assert_eq!(
+                vcs_color(&Some(Box::new(test_vcs.clone()))),
+                String::from("vcs_dirty")
+            );
         }
         {
             let test_vcs = TestVcs {
@@ -619,9 +653,13 @@ mod test {
             };
 
             assert_eq!(
-                format_vcs(&Some(Box::new(test_vcs))),
+                format_vcs(&Some(Box::new(test_vcs.clone()))),
                 Some(String::from("g:dev:-"))
-            )
+            );
+            assert_eq!(
+                vcs_color(&Some(Box::new(test_vcs.clone()))),
+                String::from("vcs_dirty")
+            );
         }
         {
             let test_vcs = TestVcs {
@@ -636,9 +674,13 @@ mod test {
             };
 
             assert_eq!(
-                format_vcs(&Some(Box::new(test_vcs))),
+                format_vcs(&Some(Box::new(test_vcs.clone()))),
                 Some(String::from("g*+?:-"))
-            )
+            );
+            assert_eq!(
+                vcs_color(&Some(Box::new(test_vcs.clone()))),
+                String::from("vcs_dirty")
+            );
         }
         {
             let test_vcs = TestVcs {
@@ -653,9 +695,13 @@ mod test {
             };
 
             assert_eq!(
-                format_vcs(&Some(Box::new(test_vcs))),
+                format_vcs(&Some(Box::new(test_vcs.clone()))),
                 Some(String::from("g*+?:dev:-"))
-            )
+            );
+            assert_eq!(
+                vcs_color(&Some(Box::new(test_vcs.clone()))),
+                String::from("vcs_dirty")
+            );
         }
         {
             let test_vcs = TestVcs {
@@ -670,9 +716,34 @@ mod test {
             };
 
             assert_eq!(
-                format_vcs(&Some(Box::new(test_vcs))),
+                format_vcs(&Some(Box::new(test_vcs.clone()))),
                 Some(String::from("g!"))
-            )
+            );
+            assert_eq!(
+                vcs_color(&Some(Box::new(test_vcs.clone()))),
+                String::from("vcs_error")
+            );
+        }
+        {
+            let test_vcs = TestVcs {
+                vcs: vcs::VcsType::Git,
+                has_modified_files: false,
+                has_staged_files: false,
+                has_new_files: false,
+                has_commits: true,
+                active_operation: vcs::ActiveOperation::None,
+                branch: Some(String::from("master")),
+                remote_branch_diff: Some((2, 3)),
+            };
+
+            assert_eq!(
+                format_vcs(&Some(Box::new(test_vcs.clone()))),
+                Some(String::from("g:+2-3"))
+            );
+            assert_eq!(
+                vcs_color(&Some(Box::new(test_vcs.clone()))),
+                String::from("vcs_dirty")
+            );
         }
     }
 }
