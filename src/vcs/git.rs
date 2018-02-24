@@ -21,6 +21,7 @@ impl GitInfo {
         modified_statuses.insert(git2::STATUS_WT_MODIFIED);
         modified_statuses.insert(git2::STATUS_WT_RENAMED);
         modified_statuses.insert(git2::STATUS_WT_TYPECHANGE);
+        modified_statuses.insert(git2::STATUS_CONFLICTED);
         let mut staged_statuses = git2::Status::empty();
         staged_statuses.insert(git2::STATUS_INDEX_DELETED);
         staged_statuses.insert(git2::STATUS_INDEX_MODIFIED);
