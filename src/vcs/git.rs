@@ -16,6 +16,8 @@ pub struct GitInfo {
 
 impl GitInfo {
     pub fn new(git: &git2::Repository) -> GitInfo {
+        #[cfg(feature="verbose")] let now = std::time::Instant::now();
+
         let mut modified_statuses = git2::Status::empty();
         modified_statuses.insert(git2::STATUS_WT_DELETED);
         modified_statuses.insert(git2::STATUS_WT_MODIFIED);
@@ -31,6 +33,8 @@ impl GitInfo {
         let mut new_statuses = git2::Status::empty();
         new_statuses.insert(git2::STATUS_WT_NEW);
 
+        #[cfg(feature="verbose")] let now = talk_about_time(now, "status bitsets");
+
         let mut status_options = git2::StatusOptions::new();
         status_options.include_untracked(true);
         if true {
@@ -41,7 +45,9 @@ impl GitInfo {
             status_options.update_index(false);
             status_options.no_refresh(true);
         }
+        #[cfg(feature="verbose")] let now = talk_about_time(now, "status options");
         let status = git.statuses(Some(&mut status_options));
+        #[cfg(feature="verbose")] let now = talk_about_time(now, "statuses");
         let mut modified_files = false;
         let mut staged_files = false;
         let mut new_files = false;
@@ -58,8 +64,10 @@ impl GitInfo {
                 }
             }
         }
+        #[cfg(feature="verbose")] let now = talk_about_time(now, "status iteration");
 
         let head = git.head();
+        #[cfg(feature="verbose")] let now = talk_about_time(now, "head");
         let commits = head.is_ok();
         let branch = head.ok().and_then(|head| {
             if head.is_branch() {
@@ -78,6 +86,7 @@ impl GitInfo {
                 )
             }
         });
+        #[cfg(feature="verbose")] let now = talk_about_time(now, "branch");
 
         let active_operation = match git.state() {
             git2::RepositoryState::Merge => super::ActiveOperation::Merge,
@@ -97,6 +106,7 @@ impl GitInfo {
             }
             _ => super::ActiveOperation::None,
         };
+        #[cfg(feature="verbose")] let now = talk_about_time(now, "active operation");
 
         let remote_branch_diff = git.head()
             .ok()
@@ -125,6 +135,7 @@ impl GitInfo {
                     })
                 })
             });
+        #[cfg(feature="verbose")] let _ = talk_about_time(now, "remote branch diff");
 
         GitInfo {
             modified_files: modified_files,
@@ -136,6 +147,13 @@ impl GitInfo {
             remote_branch_diff: remote_branch_diff,
         }
     }
+}
+
+#[cfg(feature="verbose")]
+fn talk_about_time(now: std::time::Instant, what: &str) -> std::time::Instant {
+    let elapsed = now.elapsed();
+    println!("calculating {} took {}.{:09}s", what, elapsed.as_secs(), elapsed.subsec_nanos());
+    std::time::Instant::now()
 }
 
 impl super::VcsInfo for GitInfo {
