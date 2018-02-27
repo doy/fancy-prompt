@@ -1,5 +1,4 @@
 use git2;
-use std;
 
 use std::fmt::Write;
 
@@ -189,11 +188,7 @@ impl super::VcsInfo for GitInfo {
 pub fn detect() -> Option<Box<super::VcsInfo>> {
     start_talking_about_time!("git::detect");
 
-    let pwd = std::env::current_dir();
-    talk_about_time!("pwd");
-    let git = pwd
-        .ok()
-        .and_then(|pwd| git2::Repository::discover(pwd).ok());
+    let git = git2::Repository::open_from_env().ok();
     talk_about_time!("discover");
 
     stop_talking_about_time!();
