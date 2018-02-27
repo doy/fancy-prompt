@@ -8,6 +8,9 @@ extern crate term_size;
 extern crate users;
 extern crate walkdir;
 
+#[macro_use]
+mod verbose;
+
 mod colors;
 mod power;
 mod prompt;

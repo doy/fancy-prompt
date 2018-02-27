@@ -109,6 +109,9 @@ impl Prompt {
 
         self.display_prompt();
         self.colors.pad(1);
+
+        #[cfg(feature = "verbose")]
+        self.colors.newline();
     }
 
     fn display_path(
