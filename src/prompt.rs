@@ -41,9 +41,15 @@ impl Prompt {
 
     pub fn display(&self) {
         let user =
-            self.data.user.clone().unwrap_or_else(|| String::from("???"));
+            self.data.user
+                .as_ref()
+                .map(String::as_ref)
+                .unwrap_or_else(|| "???");
         let host =
-            self.data.hostname.clone().unwrap_or_else(|| String::from("???"));
+            self.data.hostname
+                .as_ref()
+                .map(String::as_ref)
+                .unwrap_or_else(|| "???");
 
         let max_vcs_len = 20; // "g*+?:mybr...nch:+1-1"
         let vcs = self.format_vcs();

@@ -98,19 +98,17 @@ impl PowerInfo {
         false
     }
 
-    fn batteries(&self) -> Vec<PowerSupplyInfo> {
+    fn batteries(&self) -> Vec<&PowerSupplyInfo> {
         self.power_supplies
             .iter()
-            .cloned()
             .filter(|p| p.ty == PowerSupplyType::Battery)
             .collect()
     }
 
-    fn mains(&self) -> Vec<PowerSupplyInfo> {
+    fn mains(&self) -> Vec<&PowerSupplyInfo> {
         self.power_supplies
             .iter()
             .filter(|p| p.ty == PowerSupplyType::AC)
-            .cloned()
             .collect()
     }
 }
