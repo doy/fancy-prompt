@@ -187,9 +187,16 @@ impl super::VcsInfo for GitInfo {
 }
 
 pub fn detect() -> Option<Box<super::VcsInfo>> {
-    let git = std::env::current_dir()
+    start_talking_about_time!("git::detect");
+
+    let pwd = std::env::current_dir();
+    talk_about_time!("pwd");
+    let git = pwd
         .ok()
         .and_then(|pwd| git2::Repository::discover(pwd).ok());
+    talk_about_time!("discover");
+
+    stop_talking_about_time!();
 
     if let Some(git) = git {
         Some(Box::new(GitInfo::new(&git)))
