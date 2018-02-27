@@ -138,13 +138,13 @@ impl GitInfo {
         #[cfg(feature="verbose")] let _ = talk_about_time(now, "remote branch diff");
 
         GitInfo {
-            modified_files: modified_files,
-            staged_files: staged_files,
-            new_files: new_files,
-            commits: commits,
-            active_operation: active_operation,
-            branch: branch,
-            remote_branch_diff: remote_branch_diff,
+            modified_files,
+            staged_files,
+            new_files,
+            commits,
+            active_operation,
+            branch,
+            remote_branch_diff,
         }
     }
 }

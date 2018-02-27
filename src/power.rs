@@ -44,22 +44,22 @@ impl PowerInfo {
             let ty = slurp(entry.path().join("type"))
                 .map(|t: String| PowerSupplyType::from_str(&t))
                 .expect("couldn't find power supply type");
-            let full = slurp(entry.path().join("energy_full"));
-            let now = slurp(entry.path().join("energy_now"));
+            let energy_full = slurp(entry.path().join("energy_full"));
+            let energy_now = slurp(entry.path().join("energy_now"));
             let online =
                 slurp(entry.path().join("online")).map(|n: u8| n != 0);
 
             power_supplies.push(PowerSupplyInfo {
-                name: name,
-                ty: ty,
-                energy_now: now,
-                energy_full: full,
-                online: online,
+                name,
+                ty,
+                energy_now,
+                energy_full,
+                online,
             })
         }
 
         PowerInfo {
-            power_supplies: power_supplies,
+            power_supplies,
         }
     }
 

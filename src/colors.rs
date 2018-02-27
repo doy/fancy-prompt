@@ -54,9 +54,9 @@ impl Colors {
         Self::read_colors_from_env(&mut color_map);
 
         Colors {
-            color_map: color_map,
-            unknown_color: unknown_color,
-            shell_type: shell_type,
+            color_map,
+            unknown_color,
+            shell_type,
         }
     }
 
@@ -110,15 +110,15 @@ impl Colors {
         });
     }
 
-    pub fn print_host(&self, host: &Option<String>, text: &str) {
-        let color = host.clone().and_then(|hostname| {
+    pub fn print_host(&self, host: Option<&str>, text: &str) {
+        let color = host.and_then(|hostname| {
             self.color_map.get(&format!("host_{}", hostname))
         });
         self.print_with_color(color, text);
     }
 
-    pub fn print_user(&self, user: &Option<String>, text: &str) {
-        let color = user.clone().and_then(|username| {
+    pub fn print_user(&self, user: Option<&str>, text: &str) {
+        let color = user.and_then(|username| {
             self.color_map.get(&format!("user_{}", username))
         });
         self.print_with_color(color, text);

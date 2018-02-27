@@ -32,9 +32,10 @@ pub struct PromptData {
 
 impl Prompt {
     pub fn new(data: PromptData) -> Prompt {
+        let colors = colors::Colors::new(data.shell.clone());
         Prompt {
-            colors: colors::Colors::new(data.shell.clone()),
-            data: data,
+            colors,
+            data,
         }
     }
 
@@ -81,8 +82,10 @@ impl Prompt {
         self.colors.pad(1);
         self.display_path(
             &path,
-            &path_color(&self.data.pwd),
-            &vcs,
+            &path_color(
+                self.data.pwd.as_ref().map(std::path::PathBuf::as_ref),
+            ),
+            vcs.as_ref().map(String::as_ref),
             &self.vcs_color(),
         );
 
@@ -112,16 +115,16 @@ impl Prompt {
         &self,
         path: &str,
         path_color: &str,
-        vcs: &Option<String>,
+        vcs: Option<&str>,
         vcs_color: &str,
     ) {
-        self.colors.print_host(&self.data.hostname, "(");
+        self.print_host("(");
         self.colors.print(path_color, path);
-        if let Some(ref vcs) = *vcs {
-            self.colors.print_host(&self.data.hostname, "|");
+        if let Some(vcs) = vcs {
+            self.print_host("|");
             self.colors.print(vcs_color, vcs);
         }
-        self.colors.print_host(&self.data.hostname, ")");
+        self.print_host(")");
     }
 
     fn display_border(&self, len: usize) {
@@ -129,7 +132,7 @@ impl Prompt {
     }
 
     fn display_battery(&self, len: usize) {
-        self.colors.print_host(&self.data.hostname, "{");
+        self.print_host("{");
         if let Some(battery_usage) = self.data.power_info.battery_usage() {
             let charging = self.data.power_info.charging();
             let color = battery_discharge_color(battery_usage, charging);
@@ -152,22 +155,22 @@ impl Prompt {
         else {
             self.colors.print("error", &"?".repeat(len));
         }
-        self.colors.print_host(&self.data.hostname, "}");
+        self.print_host("}");
     }
 
     fn display_identity(&self, user: &str, host: &str) {
-        self.colors.print_user(&self.data.user, user);
+        self.print_user(user);
         self.colors.print("default", "@");
-        self.colors.print_host(&self.data.hostname, host);
+        self.print_host(host);
     }
 
     fn display_time(&self) {
-        self.colors.print_host(&self.data.hostname, "[");
+        self.print_host("[");
         self.colors.print(
             "default",
             &format!("{}", self.data.time.format("%H:%M:%S")),
         );
-        self.colors.print_host(&self.data.hostname, "]");
+        self.print_host("]");
     }
 
     fn display_error_code(&self) {
@@ -188,15 +191,31 @@ impl Prompt {
         else {
             "$"
         };
-        self.colors.print_user(&self.data.user, prompt);
+        self.print_user(prompt);
     }
 
     fn format_vcs(&self) -> Option<String> {
-        format_vcs(&self.data.vcs_info)
+        format_vcs(self.data.vcs_info.as_ref().map(|v| &**v))
     }
 
     fn vcs_color(&self) -> String {
-        vcs_color(&self.data.vcs_info)
+        vcs_color(self.data.vcs_info.as_ref().map(|v| &**v))
+    }
+
+    fn print_host(&self, text: &str) {
+        self.colors.print_host(self.hostname(), text);
+    }
+
+    fn print_user(&self, text: &str) {
+        self.colors.print_user(self.user(), text);
+    }
+
+    fn hostname(&self) -> Option<&str> {
+        self.data.hostname.as_ref().map(String::as_ref)
+    }
+
+    fn user(&self) -> Option<&str> {
+        self.data.user.as_ref().map(String::as_ref)
     }
 }
 
@@ -221,10 +240,7 @@ fn battery_discharge_color(usage: f64, charging: bool) -> &'static str {
     }
 }
 
-fn path_color<T>(path: &Option<T>) -> String
-where
-    T: AsRef<std::path::Path>,
-{
+fn path_color(path: Option<&std::path::Path>) -> String {
     path.as_ref()
         .and_then(|path| {
             std::fs::metadata(path)
@@ -257,7 +273,7 @@ where
         .unwrap_or_else(|| String::from("path_not_exist"))
 }
 
-fn format_vcs(vcs_info: &Option<Box<vcs::VcsInfo>>) -> Option<String> {
+fn format_vcs(vcs_info: Option<&vcs::VcsInfo>) -> Option<String> {
     vcs_info.as_ref().map(|vcs_info| {
         let mut vcs = String::new();
 
@@ -319,7 +335,7 @@ fn format_vcs(vcs_info: &Option<Box<vcs::VcsInfo>>) -> Option<String> {
     })
 }
 
-fn vcs_color(vcs_info: &Option<Box<vcs::VcsInfo>>) -> String {
+fn vcs_color(vcs_info: Option<&vcs::VcsInfo>) -> String {
     vcs_info
         .as_ref()
         .map(|vcs_info| {
@@ -575,7 +591,7 @@ mod test {
     #[test]
     fn test_format_vcs() {
         {
-            assert_eq!(format_vcs(&None), None)
+            assert_eq!(format_vcs(None), None)
         }
         {
             let test_vcs = TestVcs {
@@ -589,14 +605,8 @@ mod test {
                 remote_branch_diff: Some((0, 0)),
             };
 
-            assert_eq!(
-                format_vcs(&Some(Box::new(test_vcs.clone()))),
-                Some(String::from("g"))
-            );
-            assert_eq!(
-                vcs_color(&Some(Box::new(test_vcs.clone()))),
-                String::from("default")
-            );
+            assert_eq!(format_vcs(Some(&test_vcs)), Some(String::from("g")));
+            assert_eq!(vcs_color(Some(&test_vcs)), String::from("default"));
         }
         {
             let test_vcs = TestVcs {
@@ -611,13 +621,10 @@ mod test {
             };
 
             assert_eq!(
-                format_vcs(&Some(Box::new(test_vcs.clone()))),
+                format_vcs(Some(&test_vcs)),
                 Some(String::from("g:dev"))
             );
-            assert_eq!(
-                vcs_color(&Some(Box::new(test_vcs.clone()))),
-                String::from("default")
-            );
+            assert_eq!(vcs_color(Some(&test_vcs)), String::from("default"));
         }
         {
             let test_vcs = TestVcs {
@@ -632,13 +639,10 @@ mod test {
             };
 
             assert_eq!(
-                format_vcs(&Some(Box::new(test_vcs.clone()))),
+                format_vcs(Some(&test_vcs)),
                 Some(String::from("g:-"))
             );
-            assert_eq!(
-                vcs_color(&Some(Box::new(test_vcs.clone()))),
-                String::from("vcs_dirty")
-            );
+            assert_eq!(vcs_color(Some(&test_vcs)), String::from("vcs_dirty"));
         }
         {
             let test_vcs = TestVcs {
@@ -653,13 +657,10 @@ mod test {
             };
 
             assert_eq!(
-                format_vcs(&Some(Box::new(test_vcs.clone()))),
+                format_vcs(Some(&test_vcs)),
                 Some(String::from("g:dev:-"))
             );
-            assert_eq!(
-                vcs_color(&Some(Box::new(test_vcs.clone()))),
-                String::from("vcs_dirty")
-            );
+            assert_eq!(vcs_color(Some(&test_vcs)), String::from("vcs_dirty"));
         }
         {
             let test_vcs = TestVcs {
@@ -674,13 +675,10 @@ mod test {
             };
 
             assert_eq!(
-                format_vcs(&Some(Box::new(test_vcs.clone()))),
+                format_vcs(Some(&test_vcs)),
                 Some(String::from("g*+?:-"))
             );
-            assert_eq!(
-                vcs_color(&Some(Box::new(test_vcs.clone()))),
-                String::from("vcs_dirty")
-            );
+            assert_eq!(vcs_color(Some(&test_vcs)), String::from("vcs_dirty"));
         }
         {
             let test_vcs = TestVcs {
@@ -695,13 +693,10 @@ mod test {
             };
 
             assert_eq!(
-                format_vcs(&Some(Box::new(test_vcs.clone()))),
+                format_vcs(Some(&test_vcs)),
                 Some(String::from("g*+?:dev:-"))
             );
-            assert_eq!(
-                vcs_color(&Some(Box::new(test_vcs.clone()))),
-                String::from("vcs_dirty")
-            );
+            assert_eq!(vcs_color(Some(&test_vcs)), String::from("vcs_dirty"));
         }
         {
             let test_vcs = TestVcs {
@@ -715,14 +710,8 @@ mod test {
                 remote_branch_diff: None,
             };
 
-            assert_eq!(
-                format_vcs(&Some(Box::new(test_vcs.clone()))),
-                Some(String::from("g!"))
-            );
-            assert_eq!(
-                vcs_color(&Some(Box::new(test_vcs.clone()))),
-                String::from("vcs_error")
-            );
+            assert_eq!(format_vcs(Some(&test_vcs)), Some(String::from("g!")));
+            assert_eq!(vcs_color(Some(&test_vcs)), String::from("vcs_error"));
         }
         {
             let test_vcs = TestVcs {
@@ -737,13 +726,10 @@ mod test {
             };
 
             assert_eq!(
-                format_vcs(&Some(Box::new(test_vcs.clone()))),
+                format_vcs(Some(&test_vcs)),
                 Some(String::from("g:+2-3"))
             );
-            assert_eq!(
-                vcs_color(&Some(Box::new(test_vcs.clone()))),
-                String::from("vcs_dirty")
-            );
+            assert_eq!(vcs_color(Some(&test_vcs)), String::from("vcs_dirty"));
         }
     }
 }
