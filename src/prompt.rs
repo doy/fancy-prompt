@@ -146,15 +146,17 @@ impl Prompt {
             let charging = self.data.power_info.charging();
             let color = battery_discharge_color(battery_usage, charging);
             let filled = (battery_usage * (len as f64)).ceil() as usize;
-            let unfilled = len - filled;
-            if unfilled > 0 {
+            if len > filled {
+                let unfilled = len - filled;
                 self.colors.print(color, &"-".repeat(unfilled));
             }
-            if charging {
-                self.colors.print("battery_charging", "<");
-            }
-            else {
-                self.colors.print(color, ">");
+            if len >= filled {
+                if charging {
+                    self.colors.print("battery_charging", "<");
+                }
+                else {
+                    self.colors.print(color, ">");
+                }
             }
             if filled > 1 {
                 self.colors
