@@ -17,7 +17,9 @@
 `fancy-prompt` is a command which generates prompt output directly. First,
 install the `fancy-prompt` binary itself:
 
-`cargo install fancy-prompt`
+```
+cargo install fancy-prompt
+```
 
 Then, configure fancy-prompt for your shell:
 
