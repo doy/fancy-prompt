@@ -59,23 +59,25 @@ impl Prompt {
         let cols = self.data.terminal_cols.unwrap_or(80);
 
         // " (~/a/...cde|g*+?:mybr:+1-1) -- {--<=======} doy@lance [19:40:50] "
-        let max_path_len = cols
-            - 1                            // " "
+        let mut max_path_len = cols
+            - 1                               // " "
             - vcs
                 .as_ref()
-                .map(|vcs| vcs.len() + 1)  // "|g*+?:mybr:+1-1"
-                .unwrap_or(0) - 2          // "()"
-            - 1                            // " "
-            - 1                            // "-"
-            - 1                            // " "
-            - battery_len - 2              // "{<=========}"
-            - 1                            // " "
-            - user.len() - 1 - host.len()  // "doy@lance"
-            - 1                            // " "
-            - 10                           // "[19:40:50]"
-            - 1;                           // " "
+                .map(|vcs| vcs.len() + 1)     // "|g*+?:mybr:+1-1"
+                .unwrap_or(0) - 2             // "()"
+            - 1                               // " "
+            - 1                               // "-"
+            - 1                               // " "
+            - user.len() - 1 - host.len()     // "doy@lance"
+            - 1                               // " "
+            - 10                              // "[19:40:50]"
+            - 1;                              // " "
+        if self.data.power_info.has_batteries() {
+            max_path_len -= battery_len + 2   // "{<=========}"
+                + 1;                          // " "
+        }
 
-        if max_path_len < 10 {             // "~/a/...cde"
+        if max_path_len < 10 {                // "~/a/...cde"
             panic!(
                 "terminal too small (need at least {} cols)",
                 cols + 10 - max_path_len
@@ -99,8 +101,10 @@ impl Prompt {
         self.display_border(max_path_len - path.len() + 1);
         self.colors.pad(1);
 
-        self.display_battery(battery_len);
-        self.colors.pad(1);
+        if self.data.power_info.has_batteries() {
+            self.display_battery(battery_len);
+            self.colors.pad(1);
+        }
 
         self.display_identity(&user, &host);
         self.colors.pad(1);

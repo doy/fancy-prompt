@@ -98,6 +98,10 @@ impl PowerInfo {
         false
     }
 
+    pub fn has_batteries(&self) -> bool {
+        !self.batteries().is_empty()
+    }
+
     fn batteries(&self) -> Vec<&PowerSupplyInfo> {
         self.power_supplies
             .iter()
