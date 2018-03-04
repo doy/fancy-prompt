@@ -4,6 +4,8 @@
 
 ## Screenshots
 
+![Screenshots of fancy-prompt](screenshots/fancy-prompt.png)
+
 ## Features
 
 * Git integration
