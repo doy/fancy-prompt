@@ -1,7 +1,17 @@
 [package]
 name = "fancy-prompt"
+description = "fancy-prompt is an improved shell prompt with several useful features"
+repository = "https://github.com/doy/fancy-prompt"
+license = "MIT"
 version = "0.1.0"
 authors = ["Jesse Luehrs <doy@tozt.net>"]
+exclude = ["screenshots/*"]
+
+[badges]
+travis-ci = { repository = "doy/fancy-prompt", branch = "master" }
+is-it-maintained-issue-resolution = { repository = "doy/fancy-prompt" }
+is-it-maintained-open-issues = { repository = "doy/fancy-prompt" }
+maintenance = { status = "experimental" }
 
 [dependencies]
 chrono = "0.4"
