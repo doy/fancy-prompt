@@ -3,7 +3,7 @@ name = "fancy-prompt"
 description = "fancy-prompt is an improved shell prompt with several useful features"
 repository = "https://github.com/doy/fancy-prompt"
 license = "MIT"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Jesse Luehrs <doy@tozt.net>"]
 exclude = ["screenshots/*"]
 
