@@ -25,7 +25,6 @@ fn collect_data() -> prompt::PromptData {
         .about("Prints a fancy prompt")
         .author(crate_authors!())
         .version(crate_version!())
-        .long_version(option_env!("FANCY_PROMPT_BUILD_GIT_REV").unwrap())
         .arg(clap::Arg::with_name("prompt-escape")
              .long("prompt-escape")
              .value_name("SHELL")
