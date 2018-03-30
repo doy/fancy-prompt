@@ -106,7 +106,7 @@ impl Prompt {
             self.colors.pad(1);
         }
 
-        self.display_identity(&user, &host);
+        self.display_identity(user, host);
         self.colors.pad(1);
 
         self.display_time();
