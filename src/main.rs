@@ -17,6 +17,7 @@ mod colors;
 mod data;
 mod power;
 mod prompt;
+mod sys;
 mod vcs;
 
 fn main() {

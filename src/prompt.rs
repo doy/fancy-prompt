@@ -1,13 +1,11 @@
 use regex;
 use std;
-use users;
 
 use std::fmt::Write;
-use std::os::linux::fs::MetadataExt;
-use std::os::unix::fs::PermissionsExt;
 
 use colors;
 use data;
+use sys;
 use vcs;
 
 pub struct Prompt {
@@ -242,33 +240,15 @@ fn battery_discharge_color(usage: f64, charging: bool) -> &'static str {
 
 fn path_color(path: Option<&std::path::Path>) -> String {
     path.as_ref()
-        .and_then(|path| {
-            std::fs::metadata(path)
-                .map(|stat| {
-                    // XXX there really has to be a better option here
-                    let euid = users::get_effective_uid();
-                    let egid = users::get_effective_gid();
-                    let file_uid = stat.st_uid();
-                    let file_gid = stat.st_gid();
-                    let file_mode = stat.permissions().mode();
-
-                    if euid == 0 {
-                        String::from("default")
-                    }
-                    else if (file_uid == euid) && (file_mode & 0o200 != 0) {
-                        String::from("default")
-                    }
-                    else if (file_gid == egid) && (file_mode & 0o020 != 0) {
-                        String::from("default")
-                    }
-                    else if file_mode & 0o002 != 0 {
-                        String::from("default")
-                    }
-                    else {
-                        String::from("path_not_writable")
-                    }
-                })
-                .ok()
+        .map(|path| {
+            match sys::path_writable(path) {
+                sys::PathWritability::Writable
+                    => String::from("default"),
+                sys::PathWritability::NotWritable
+                    => String::from("path_not_writable"),
+                sys::PathWritability::NotExist
+                    => String::from("path_not_exist"),
+            }
         })
         .unwrap_or_else(|| String::from("path_not_exist"))
 }
