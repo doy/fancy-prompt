@@ -137,9 +137,9 @@ impl Colors {
         })
     }
 
-    fn print_color(
+    fn print_color<W: std::io::Write>(
         &self,
-        t: &mut term::StdoutTerminal,
+        t: &mut term::Terminal<Output=W>,
         color: Option<&term::color::Color>,
     ) {
         self.print_wrapped(|| {
