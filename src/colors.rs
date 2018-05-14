@@ -1,6 +1,8 @@
 use std;
 use term;
 
+use std::io::Write;
+
 #[derive(Debug, Clone)]
 pub enum ShellType {
     Unknown,
@@ -129,9 +131,16 @@ impl Colors {
         color: Option<&term::color::Color>,
         text: &str,
     ) {
-        let mut t = term::stdout().unwrap();
-        self.print_color(&mut *t, color);
+        let mut t = term::TerminfoTerminal::new(std::io::stdout()).unwrap();
+        self.print_color(&mut t, color);
         write!(t, "{}", text).unwrap();
+        self.print_reset(&mut t);
+    }
+
+    fn print_reset<W: std::io::Write>(
+        &self,
+        t: &mut term::Terminal<Output=W>,
+    ) {
         self.print_wrapped(|| {
             t.reset().unwrap();
         })
