@@ -99,21 +99,19 @@ impl PowerInfo {
     }
 
     pub fn has_batteries(&self) -> bool {
-        !self.batteries().is_empty()
+        self.batteries().count() > 0
     }
 
-    fn batteries(&self) -> Vec<&PowerSupplyInfo> {
+    fn batteries(&self) -> impl Iterator<Item=&PowerSupplyInfo> {
         self.power_supplies
             .iter()
             .filter(|p| p.ty == PowerSupplyType::Battery)
-            .collect()
     }
 
-    fn mains(&self) -> Vec<&PowerSupplyInfo> {
+    fn mains(&self) -> impl Iterator<Item=&PowerSupplyInfo> {
         self.power_supplies
             .iter()
             .filter(|p| p.ty == PowerSupplyType::AC)
-            .collect()
     }
 }
 
