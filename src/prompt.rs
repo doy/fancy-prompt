@@ -1,4 +1,3 @@
-use chrono;
 use regex;
 use std;
 use users;
@@ -8,30 +7,16 @@ use std::os::linux::fs::MetadataExt;
 use std::os::unix::fs::PermissionsExt;
 
 use colors;
-use power;
+use data;
 use vcs;
 
 pub struct Prompt {
     colors: colors::Colors,
-    data: PromptData,
-}
-
-pub struct PromptData {
-    pub shell: colors::ShellType,
-    pub error_code: u8,
-    pub hostname: Option<String>,
-    pub terminal_cols: Option<usize>,
-    pub pwd: Option<std::path::PathBuf>,
-    pub home: Option<std::path::PathBuf>,
-    pub user: Option<String>,
-    pub is_root: bool,
-    pub time: chrono::DateTime<chrono::Local>,
-    pub power_info: power::PowerInfo,
-    pub vcs_info: Option<Box<vcs::VcsInfo>>,
+    data: data::PromptData,
 }
 
 impl Prompt {
-    pub fn new(data: PromptData) -> Prompt {
+    pub fn new(data: data::PromptData) -> Prompt {
         let colors = colors::Colors::new(data.shell.clone());
         Prompt {
             colors,
