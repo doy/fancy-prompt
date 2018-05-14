@@ -1,5 +1,6 @@
 use regex;
 use std;
+use term;
 
 use std::fmt::Write;
 
@@ -22,7 +23,9 @@ impl Prompt {
         }
     }
 
-    pub fn display(&self) {
+    pub fn display<W: std::io::Write>(&self, w: W) {
+        let mut t = term::TerminfoTerminal::new(w).unwrap();
+
         let user =
             self.data.user
                 .as_ref()
@@ -70,8 +73,9 @@ impl Prompt {
         let path =
             compress_path(&self.data.pwd, &self.data.home, max_path_len);
 
-        self.colors.pad(1);
+        self.colors.pad(&mut t, 1);
         self.display_path(
+            &mut t,
             &path,
             &path_color(
                 self.data.pwd.as_ref().map(std::path::PathBuf::as_ref),
@@ -80,116 +84,143 @@ impl Prompt {
             &self.vcs_color(),
         );
 
-        self.colors.pad(1);
-        self.display_border(max_path_len - path.len() + 1);
-        self.colors.pad(1);
+        self.colors.pad(&mut t, 1);
+        self.display_border(&mut t, max_path_len - path.len() + 1);
+        self.colors.pad(&mut t, 1);
 
         if self.data.power_info.has_batteries() {
-            self.display_battery(battery_len);
-            self.colors.pad(1);
+            self.display_battery(&mut t, battery_len);
+            self.colors.pad(&mut t, 1);
         }
 
-        self.display_identity(user, host);
-        self.colors.pad(1);
+        self.display_identity(&mut t, user, host);
+        self.colors.pad(&mut t, 1);
 
-        self.display_time();
-        self.colors.pad(1);
+        self.display_time(&mut t);
+        self.colors.pad(&mut t, 1);
 
-        self.colors.newline();
+        self.colors.newline(&mut t);
 
-        self.display_error_code();
-        self.colors.pad(1);
+        self.display_error_code(&mut t);
+        self.colors.pad(&mut t, 1);
 
-        self.display_prompt();
-        self.colors.pad(1);
+        self.display_prompt(&mut t);
+        self.colors.pad(&mut t, 1);
 
         #[cfg(feature = "verbose")]
-        self.colors.newline();
+        self.colors.newline(&mut t);
     }
 
-    fn display_path(
+    fn display_path<W: std::io::Write>(
         &self,
+        t: &mut term::Terminal<Output=W>,
         path: &str,
         path_color: &str,
         vcs: Option<&str>,
         vcs_color: &str,
     ) {
-        self.print_host("(");
-        self.colors.print(path_color, path);
+        self.print_host(t, "(");
+        self.colors.print(t, path_color, path);
         if let Some(vcs) = vcs {
-            self.print_host("|");
-            self.colors.print(vcs_color, vcs);
+            self.print_host(t, "|");
+            self.colors.print(t, vcs_color, vcs);
         }
-        self.print_host(")");
+        self.print_host(t, ")");
     }
 
-    fn display_border(&self, len: usize) {
-        self.colors.print("default", &"-".repeat(len));
+    fn display_border<W: std::io::Write>(
+        &self,
+        t: &mut term::Terminal<Output=W>,
+        len: usize
+    ) {
+        self.colors.print(t, "default", &"-".repeat(len));
     }
 
-    fn display_battery(&self, len: usize) {
-        self.print_host("{");
+    fn display_battery<W: std::io::Write>(
+        &self,
+        t: &mut term::Terminal<Output=W>,
+        len: usize
+    ) {
+        self.print_host(t, "{");
         if let Some(battery_usage) = self.data.power_info.battery_usage() {
             let charging = self.data.power_info.charging();
             let color = battery_discharge_color(battery_usage, charging);
             let filled = (battery_usage * (len as f64)).ceil() as usize;
             if len > filled {
                 let unfilled = len - filled;
-                self.colors.print(color, &"-".repeat(unfilled));
+                self.colors.print(t, color, &"-".repeat(unfilled));
             }
             if len >= filled {
                 if charging {
-                    self.colors.print("battery_charging", "<");
+                    self.colors.print(t, "battery_charging", "<");
                 }
                 else {
-                    self.colors.print(color, ">");
+                    self.colors.print(t, color, ">");
                 }
             }
             if filled > 1 {
                 self.colors
-                    .print("battery_charging", &"=".repeat(filled - 1));
+                    .print(t, "battery_charging", &"=".repeat(filled - 1));
             }
         }
         else {
-            self.colors.print("error", &"?".repeat(len));
+            self.colors.print(t, "error", &"?".repeat(len));
         }
-        self.print_host("}");
+        self.print_host(t, "}");
     }
 
-    fn display_identity(&self, user: &str, host: &str) {
-        self.print_user(user);
-        self.colors.print("default", "@");
-        self.print_host(host);
+    fn display_identity<W: std::io::Write>(
+        &self,
+        t: &mut term::Terminal<Output=W>,
+        user: &str,
+        host: &str,
+    ) {
+        self.print_user(t, user);
+        self.colors.print(t, "default", "@");
+        self.print_host(t, host);
     }
 
-    fn display_time(&self) {
-        self.print_host("[");
+    fn display_time<W: std::io::Write>(
+        &self,
+        t: &mut term::Terminal<Output=W>,
+    ) {
+        self.print_host(t, "[");
         self.colors.print(
+            t,
             "default",
             &format!("{}", self.data.time.format("%H:%M:%S")),
         );
-        self.print_host("]");
+        self.print_host(t, "]");
     }
 
-    fn display_error_code(&self) {
+    fn display_error_code<W: std::io::Write>(
+        &self,
+        t: &mut term::Terminal<Output=W>,
+    ) {
         let error_code_color = if self.data.error_code == 0 {
             "default"
         }
         else {
             "error"
         };
-        self.colors
-            .print(error_code_color, &format!("{:03}", self.data.error_code));
+        self.colors.print(
+            t,
+            error_code_color,
+            &format!("{:03}", self.data.error_code)
+        );
     }
 
-    fn display_prompt(&self) {
+    fn display_prompt<W: std::io::Write>(
+        &self,
+        t: &mut term::Terminal<Output=W>,
+    ) {
         let prompt = if self.data.is_root {
             "#"
         }
         else {
             "$"
         };
-        self.print_user(prompt);
+        self.print_user(t, prompt);
     }
 
     fn format_vcs(&self) -> Option<String> {
@@ -200,12 +231,20 @@ impl Prompt {
         vcs_color(self.data.vcs_info.as_ref().map(|v| &**v))
     }
 
-    fn print_host(&self, text: &str) {
-        self.colors.print_host(self.hostname(), text);
+    fn print_host<W: std::io::Write>(
+        &self,
+        t: &mut term::Terminal<Output=W>,
+        text: &str
+    ) {
+        self.colors.print_host(t, self.hostname(), text);
     }
 
-    fn print_user(&self, text: &str) {
-        self.colors.print_user(self.user(), text);
+    fn print_user<W: std::io::Write>(
+        &self,
+        t: &mut term::Terminal<Output=W>,
+        text: &str
+    ) {
+        self.colors.print_user(t, self.user(), text);
     }
 
     fn hostname(&self) -> Option<&str> {

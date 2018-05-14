@@ -1,8 +1,6 @@
 use std;
 use term;
 
-use std::io::Write;
-
 #[derive(Debug, Clone)]
 pub enum ShellType {
     Unknown,
@@ -97,51 +95,73 @@ impl Colors {
         }
     }
 
-    pub fn print(&self, color: &str, text: &str) {
+    pub fn print<W: std::io::Write>(
+        &self,
+        t: &mut term::Terminal<Output=W>,
+        color: &str,
+        text: &str,
+    ) {
         let color = self.color_map.get(color);
-        self.print_with_color(color, text);
+        self.print_with_color(t, color, text);
     }
 
-    pub fn pad(&self, len: usize) {
-        print!("{}", " ".repeat(len));
+    pub fn pad<W: std::io::Write>(
+        &self,
+        t: &mut term::Terminal<Output=W>,
+        len: usize,
+    ) {
+        write!(t, "{}", " ".repeat(len)).unwrap();
     }
 
-    pub fn newline(&self) {
-        self.print_wrapped(|| {
-            print!("{}", "\n");
+    pub fn newline<W: std::io::Write>(
+        &self,
+        t: &mut term::Terminal<Output=W>,
+    ) {
+        self.print_wrapped(t, |t| {
+            write!(t, "{}", "\n").unwrap();
         });
     }
 
-    pub fn print_host(&self, host: Option<&str>, text: &str) {
+    pub fn print_host<W: std::io::Write>(
+        &self,
+        t: &mut term::Terminal<Output=W>,
+        host: Option<&str>,
+        text: &str,
+    ) {
         let color = host.and_then(|hostname| {
             self.color_map.get(&format!("host_{}", hostname))
         });
-        self.print_with_color(color, text);
+        self.print_with_color(t, color, text);
     }
 
-    pub fn print_user(&self, user: Option<&str>, text: &str) {
+    pub fn print_user<W: std::io::Write>(
+        &self,
+        t: &mut term::Terminal<Output=W>,
+        user: Option<&str>,
+        text: &str,
+    ) {
         let color = user.and_then(|username| {
             self.color_map.get(&format!("user_{}", username))
         });
-        self.print_with_color(color, text);
+        self.print_with_color(t, color, text);
     }
 
-    fn print_with_color(
+    fn print_with_color<W: std::io::Write>(
         &self,
+        t: &mut term::Terminal<Output=W>,
         color: Option<&term::color::Color>,
         text: &str,
     ) {
-        let mut t = term::TerminfoTerminal::new(std::io::stdout()).unwrap();
-        self.print_color(&mut t, color);
+        self.print_color(t, color);
         write!(t, "{}", text).unwrap();
-        self.print_reset(&mut t);
+        self.print_reset(t);
     }
 
     fn print_reset<W: std::io::Write>(
         &self,
         t: &mut term::Terminal<Output=W>,
     ) {
-        self.print_wrapped(|| {
+        self.print_wrapped(t, |t| {
             t.reset().unwrap();
         })
     }
@@ -151,7 +171,7 @@ impl Colors {
         t: &mut term::Terminal<Output=W>,
         color: Option<&term::color::Color>,
     ) {
-        self.print_wrapped(|| {
+        self.print_wrapped(t, |t| {
             let real_color = *color.unwrap_or(&self.unknown_color);
             t.fg(real_color).unwrap();
             match real_color {
@@ -170,9 +190,13 @@ impl Colors {
         })
     }
 
-    fn print_wrapped<T>(&self, printer: T)
+    fn print_wrapped<W: std::io::Write, T>(
+        &self,
+        t: &mut term::Terminal<Output=W>,
+        printer: T,
+    )
     where
-        T: FnOnce(),
+        T: FnOnce(&mut term::Terminal<Output=W>),
     {
         match self.shell_type {
             ShellType::Bash => {
@@ -184,7 +208,7 @@ impl Colors {
             _ => {}
         }
 
-        printer();
+        printer(t);
 
         match self.shell_type {
             ShellType::Bash => {

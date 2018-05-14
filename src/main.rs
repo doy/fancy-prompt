@@ -26,7 +26,8 @@ fn main() {
     talk_about_time!("parsing args");
     let data = data::collect(opts);
     talk_about_time!("collecting data");
-    prompt::Prompt::new(data).display();
+    let w = std::io::stdout();
+    prompt::Prompt::new(data).display(w);
     talk_about_time!("displaying data");
     stop_talking_about_time!();
 }
@@ -51,6 +52,7 @@ mod tests {
             power_info: power::PowerInfo::new(),
             vcs_info: None,
         };
-        prompt::Prompt::new(data).display();
+        let w = vec![];
+        prompt::Prompt::new(data).display(w);
     }
 }
