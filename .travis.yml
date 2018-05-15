@@ -5,6 +5,8 @@ rust:
     - stable
     - beta
     - nightly
+env:
+    - RUST_BACKTRACE=1
 matrix:
     allow_failures:
         - rust: nightly
