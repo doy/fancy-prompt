@@ -117,9 +117,7 @@ impl Colors {
         &self,
         t: &mut term::Terminal<Output=W>,
     ) {
-        self.print_wrapped(t, |t| {
-            write!(t, "{}", "\n").unwrap();
-        });
+        write!(t, "{}", "\n").unwrap();
     }
 
     pub fn print_host<W: std::io::Write>(
