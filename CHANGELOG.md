@@ -1,5 +1,10 @@
 # Changes
 
+## 0.1.4
+
+* Fix shell prompt escaping (should fix input corruption in new zsh, probably
+  among other things)
+
 ## 0.1.3
 
 * Fix compilation and execution on macos (battery state is not yet supported
