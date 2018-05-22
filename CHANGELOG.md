@@ -1,5 +1,10 @@
 # Changes
 
+## 0.1.5
+
+* Strip off everything past a '.' in the hostname (OSX puts extra confusing
+  data in the hostname that's not particularly useful)
+
 ## 0.1.4
 
 * Fix shell prompt escaping (should fix input corruption in new zsh, probably
