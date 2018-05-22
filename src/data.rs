@@ -63,7 +63,15 @@ pub fn collect(opts: args::CommandLineOptions) -> PromptData {
 }
 
 fn hostname() -> Option<String> {
-    hostname::get_hostname()
+    if let Some(mut name) = hostname::get_hostname() {
+        if let Some(idx) = name.find('.') {
+            name.truncate(idx);
+        }
+        Some(name)
+    }
+    else {
+        None
+    }
 }
 
 fn terminal_cols() -> Option<usize> {
