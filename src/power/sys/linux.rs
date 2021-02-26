@@ -39,6 +39,7 @@ impl super::PowerSupplyType {
         match ty {
             "Mains" => super::PowerSupplyType::AC,
             "Battery" => super::PowerSupplyType::Battery,
+            "USB" => super::PowerSupplyType::Other,
             _ => panic!("unknown power supply type {}", ty),
         }
     }

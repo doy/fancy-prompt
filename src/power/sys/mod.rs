@@ -12,6 +12,7 @@ pub use self::macos::*;
 pub enum PowerSupplyType {
     AC,
     Battery,
+    Other,
 }
 
 #[derive(Debug, Clone)]
