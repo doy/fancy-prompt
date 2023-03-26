@@ -1,5 +1,3 @@
-use walkdir;
-
 pub fn power_supplies() -> Vec<super::PowerSupplyInfo> {
     let mut power_supplies = vec![];
     for entry in walkdir::WalkDir::new("/sys/class/power_supply/")

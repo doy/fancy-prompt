@@ -30,7 +30,7 @@ pub trait VcsInfo {
         self.has_modified_files()
             || self.has_staged_files()
             || self.has_new_files()
-            || !diff.is_some()
+            || diff.is_none()
             || diff
                 .map(|(local, remote)| local > 0 || remote > 0)
                 .unwrap_or(false)

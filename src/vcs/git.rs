@@ -1,5 +1,3 @@
-use git2;
-
 use std::fmt::Write;
 
 #[derive(Debug)]

@@ -1,5 +1,3 @@
-use std;
-
 use std::io::Read;
 
 mod sys;

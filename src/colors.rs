@@ -1,6 +1,3 @@
-use std;
-use term;
-
 #[derive(Debug, Clone)]
 pub enum ShellType {
     Unknown,
@@ -117,7 +114,7 @@ impl Colors {
         &self,
         t: &mut dyn term::Terminal<Output = W>,
     ) {
-        write!(t, "{}", "\n").unwrap();
+        writeln!(t).unwrap();
     }
 
     pub fn print_host<W: std::io::Write>(
@@ -197,10 +194,10 @@ impl Colors {
     {
         match self.shell_type {
             ShellType::Bash => {
-                print!("{}", "\\[");
+                print!("\\[");
             }
             ShellType::Zsh => {
-                print!("{}", "%{");
+                print!("%{{");
             }
             _ => {}
         }
@@ -209,10 +206,10 @@ impl Colors {
 
         match self.shell_type {
             ShellType::Bash => {
-                print!("{}", "\\]");
+                print!("\\]");
             }
             ShellType::Zsh => {
-                print!("{}", "%}");
+                print!("%}}");
             }
             _ => {}
         }

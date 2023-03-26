@@ -1,5 +1,3 @@
-use clap;
-
 use crate::colors;
 
 pub struct CommandLineOptions {
@@ -28,7 +26,7 @@ pub fn parse() -> CommandLineOptions {
 
     let shell = matches
         .value_of("prompt-escape")
-        .map(|shell| colors::ShellType::from_str(shell))
+        .map(colors::ShellType::from_str)
         .unwrap_or(colors::ShellType::Unknown);
     let error_code = matches
         .value_of("error-code")

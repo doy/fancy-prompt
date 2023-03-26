@@ -1,7 +1,3 @@
-use regex;
-use std;
-use term;
-
 use std::fmt::Write;
 
 use crate::colors;
@@ -219,11 +215,11 @@ impl Prompt {
     }
 
     fn format_vcs(&self) -> Option<String> {
-        format_vcs(self.data.vcs_info.as_ref().map(|v| &**v))
+        format_vcs(self.data.vcs_info.as_deref())
     }
 
     fn vcs_color(&self) -> String {
-        vcs_color(self.data.vcs_info.as_ref().map(|v| &**v))
+        vcs_color(self.data.vcs_info.as_deref())
     }
 
     fn print_host<W: std::io::Write>(
@@ -254,9 +250,7 @@ impl Prompt {
 fn battery_discharge_color(usage: f64, charging: bool) -> &'static str {
     if usage >= 0.8 {
         "battery_full"
-    } else if charging {
-        "default"
-    } else if usage >= 0.4 {
+    } else if charging || usage >= 0.4 {
         "default"
     } else if usage >= 0.15 {
         "battery_warn"
@@ -309,7 +303,7 @@ fn format_vcs(vcs_info: Option<&dyn vcs::VcsInfo>) -> Option<String> {
                 }
             })
             .unwrap_or_else(|| String::from("???"));
-        if branch != "" {
+        if !branch.is_empty() {
             write!(vcs, ":").unwrap();
         }
         write!(vcs, "{}", branch).unwrap();
@@ -417,7 +411,7 @@ fn compress_vcs(vcs: &str, len: usize) -> String {
                 let branch_len = len - prefix_len - suffix_len;
                 let branch_re = regex::Regex::new(&format!(
                     r"(:[^:]{{{}}})[^:]*([^:]{{3}}:?)",
-                    (branch_len - 6).to_string()
+                    (branch_len - 6)
                 ))
                 .unwrap();
                 branch_re.replace(vcs, "$1...$2").into_owned()
