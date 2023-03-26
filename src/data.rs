@@ -69,8 +69,8 @@ fn hostname() -> Option<String> {
 }
 
 fn terminal_cols() -> Option<usize> {
-    if let Some((w, _h)) = term_size::dimensions() {
-        Some(w)
+    if let Some((w, _h)) = terminal_size::terminal_size() {
+        Some(usize::from(w.0))
     } else {
         None
     }
