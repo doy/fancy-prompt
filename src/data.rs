@@ -1,13 +1,7 @@
-use chrono;
-use hostname;
-use term_size;
-use std;
-use users;
-
-use args;
-use colors;
-use power;
-use vcs;
+use crate::args;
+use crate::colors;
+use crate::power;
+use crate::vcs;
 
 pub struct PromptData {
     pub shell: colors::ShellType,
@@ -20,7 +14,7 @@ pub struct PromptData {
     pub is_root: bool,
     pub time: chrono::DateTime<chrono::Local>,
     pub power_info: power::PowerInfo,
-    pub vcs_info: Option<Box<vcs::VcsInfo>>,
+    pub vcs_info: Option<Box<dyn vcs::VcsInfo>>,
 }
 
 pub fn collect(opts: args::CommandLineOptions) -> PromptData {
@@ -107,6 +101,6 @@ fn power_info() -> power::PowerInfo {
     power::PowerInfo::new()
 }
 
-fn vcs_info() -> Option<Box<vcs::VcsInfo>> {
+fn vcs_info() -> Option<Box<dyn vcs::VcsInfo>> {
     vcs::detect()
 }

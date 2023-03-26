@@ -38,7 +38,7 @@ pub trait VcsInfo {
     }
 }
 
-pub fn detect() -> Option<Box<VcsInfo>> {
+pub fn detect() -> Option<Box<dyn VcsInfo>> {
     if let Some(git) = git::detect() {
         Some(git)
     }

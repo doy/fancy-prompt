@@ -4,10 +4,10 @@ use term;
 
 use std::fmt::Write;
 
-use colors;
-use data;
-use sys;
-use vcs;
+use crate::colors;
+use crate::data;
+use crate::sys;
+use crate::vcs;
 
 pub struct Prompt {
     colors: colors::Colors,
@@ -113,7 +113,7 @@ impl Prompt {
 
     fn display_path<W: std::io::Write>(
         &self,
-        t: &mut term::Terminal<Output=W>,
+        t: &mut dyn term::Terminal<Output=W>,
         path: &str,
         path_color: &str,
         vcs: Option<&str>,
@@ -130,7 +130,7 @@ impl Prompt {
 
     fn display_border<W: std::io::Write>(
         &self,
-        t: &mut term::Terminal<Output=W>,
+        t: &mut dyn term::Terminal<Output=W>,
         len: usize
     ) {
         self.colors.print(t, "default", &"-".repeat(len));
@@ -138,7 +138,7 @@ impl Prompt {
 
     fn display_battery<W: std::io::Write>(
         &self,
-        t: &mut term::Terminal<Output=W>,
+        t: &mut dyn term::Terminal<Output=W>,
         len: usize
     ) {
         self.print_host(t, "{");
@@ -171,7 +171,7 @@ impl Prompt {
 
     fn display_identity<W: std::io::Write>(
         &self,
-        t: &mut term::Terminal<Output=W>,
+        t: &mut dyn term::Terminal<Output=W>,
         user: &str,
         host: &str,
     ) {
@@ -182,7 +182,7 @@ impl Prompt {
 
     fn display_time<W: std::io::Write>(
         &self,
-        t: &mut term::Terminal<Output=W>,
+        t: &mut dyn term::Terminal<Output=W>,
     ) {
         self.print_host(t, "[");
         self.colors.print(
@@ -195,7 +195,7 @@ impl Prompt {
 
     fn display_error_code<W: std::io::Write>(
         &self,
-        t: &mut term::Terminal<Output=W>,
+        t: &mut dyn term::Terminal<Output=W>,
     ) {
         let error_code_color = if self.data.error_code == 0 {
             "default"
@@ -212,7 +212,7 @@ impl Prompt {
 
     fn display_prompt<W: std::io::Write>(
         &self,
-        t: &mut term::Terminal<Output=W>,
+        t: &mut dyn term::Terminal<Output=W>,
     ) {
         let prompt = if self.data.is_root {
             "#"
@@ -233,7 +233,7 @@ impl Prompt {
 
     fn print_host<W: std::io::Write>(
         &self,
-        t: &mut term::Terminal<Output=W>,
+        t: &mut dyn term::Terminal<Output=W>,
         text: &str
     ) {
         self.colors.print_host(t, self.hostname(), text);
@@ -241,7 +241,7 @@ impl Prompt {
 
     fn print_user<W: std::io::Write>(
         &self,
-        t: &mut term::Terminal<Output=W>,
+        t: &mut dyn term::Terminal<Output=W>,
         text: &str
     ) {
         self.colors.print_user(t, self.user(), text);
@@ -292,7 +292,7 @@ fn path_color(path: Option<&std::path::Path>) -> String {
         .unwrap_or_else(|| String::from("path_not_exist"))
 }
 
-fn format_vcs(vcs_info: Option<&vcs::VcsInfo>) -> Option<String> {
+fn format_vcs(vcs_info: Option<&dyn vcs::VcsInfo>) -> Option<String> {
     vcs_info.as_ref().map(|vcs_info| {
         let mut vcs = String::new();
 
@@ -354,7 +354,7 @@ fn format_vcs(vcs_info: Option<&vcs::VcsInfo>) -> Option<String> {
     })
 }
 
-fn vcs_color(vcs_info: Option<&vcs::VcsInfo>) -> String {
+fn vcs_color(vcs_info: Option<&dyn vcs::VcsInfo>) -> String {
     vcs_info
         .as_ref()
         .map(|vcs_info| {

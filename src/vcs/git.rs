@@ -185,7 +185,7 @@ impl super::VcsInfo for GitInfo {
     }
 }
 
-pub fn detect() -> Option<Box<super::VcsInfo>> {
+pub fn detect() -> Option<Box<dyn super::VcsInfo>> {
     start_talking_about_time!("git::detect");
 
     let git = git2::Repository::open_from_env().ok();

@@ -97,7 +97,7 @@ impl Colors {
 
     pub fn print<W: std::io::Write>(
         &self,
-        t: &mut term::Terminal<Output=W>,
+        t: &mut dyn term::Terminal<Output=W>,
         color: &str,
         text: &str,
     ) {
@@ -107,7 +107,7 @@ impl Colors {
 
     pub fn pad<W: std::io::Write>(
         &self,
-        t: &mut term::Terminal<Output=W>,
+        t: &mut dyn term::Terminal<Output=W>,
         len: usize,
     ) {
         write!(t, "{}", " ".repeat(len)).unwrap();
@@ -115,14 +115,14 @@ impl Colors {
 
     pub fn newline<W: std::io::Write>(
         &self,
-        t: &mut term::Terminal<Output=W>,
+        t: &mut dyn term::Terminal<Output=W>,
     ) {
         write!(t, "{}", "\n").unwrap();
     }
 
     pub fn print_host<W: std::io::Write>(
         &self,
-        t: &mut term::Terminal<Output=W>,
+        t: &mut dyn term::Terminal<Output=W>,
         host: Option<&str>,
         text: &str,
     ) {
@@ -134,7 +134,7 @@ impl Colors {
 
     pub fn print_user<W: std::io::Write>(
         &self,
-        t: &mut term::Terminal<Output=W>,
+        t: &mut dyn term::Terminal<Output=W>,
         user: Option<&str>,
         text: &str,
     ) {
@@ -146,7 +146,7 @@ impl Colors {
 
     fn print_with_color<W: std::io::Write>(
         &self,
-        t: &mut term::Terminal<Output=W>,
+        t: &mut dyn term::Terminal<Output=W>,
         color: Option<&term::color::Color>,
         text: &str,
     ) {
@@ -157,7 +157,7 @@ impl Colors {
 
     fn print_reset<W: std::io::Write>(
         &self,
-        t: &mut term::Terminal<Output=W>,
+        t: &mut dyn term::Terminal<Output=W>,
     ) {
         self.print_wrapped(t, |t| {
             t.reset().unwrap();
@@ -166,7 +166,7 @@ impl Colors {
 
     fn print_color<W: std::io::Write>(
         &self,
-        t: &mut term::Terminal<Output=W>,
+        t: &mut dyn term::Terminal<Output=W>,
         color: Option<&term::color::Color>,
     ) {
         self.print_wrapped(t, |t| {
@@ -190,11 +190,11 @@ impl Colors {
 
     fn print_wrapped<W: std::io::Write, T>(
         &self,
-        t: &mut term::Terminal<Output=W>,
+        t: &mut dyn term::Terminal<Output=W>,
         printer: T,
     )
     where
-        T: FnOnce(&mut term::Terminal<Output=W>),
+        T: FnOnce(&mut dyn term::Terminal<Output=W>),
     {
         match self.shell_type {
             ShellType::Bash => {

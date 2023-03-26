@@ -6,6 +6,7 @@ license = "MIT"
 version = "0.1.6"
 authors = ["Jesse Luehrs <doy@tozt.net>"]
 exclude = ["screenshots/*"]
+edition = "2021"
 
 [badges]
 travis-ci = { repository = "doy/fancy-prompt", branch = "master" }

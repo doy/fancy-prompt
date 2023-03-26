@@ -1,6 +1,6 @@
 use clap;
 
-use colors;
+use crate::colors;
 
 pub struct CommandLineOptions {
     pub shell: colors::ShellType,
