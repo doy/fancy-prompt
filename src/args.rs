@@ -21,6 +21,7 @@ pub fn parse() -> CommandLineOptions {
         .arg(
             clap::Arg::new("error-code")
                 .value_name("ERROR_CODE")
+                .value_parser(clap::value_parser!(u8))
                 .help("The error code of the previously run command"),
         )
         .get_matches();
