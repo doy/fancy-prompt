@@ -1,7 +1,4 @@
 #[cfg(feature = "verbose")]
-use std;
-
-#[cfg(feature = "verbose")]
 pub static mut STACK: Option<
     Vec<(String, std::time::Instant, std::time::Instant)>,
 > = None;
@@ -9,10 +6,9 @@ pub static mut STACK: Option<
 #[cfg(feature = "verbose")]
 macro_rules! start_talking_about_time {
     ($category:expr) => {
-        use std;
-        use verbose;
         unsafe {
-            let stack = verbose::STACK.get_or_insert_with(|| Vec::new());
+            let stack =
+                crate::verbose::STACK.get_or_insert_with(|| Vec::new());
             let len = stack.len();
             let now = std::time::Instant::now();
             let category = $category;
@@ -26,7 +22,8 @@ macro_rules! start_talking_about_time {
 macro_rules! talk_about_time {
     ($what:expr) => {
         unsafe {
-            let stack = verbose::STACK.get_or_insert_with(|| Vec::new());
+            let stack =
+                crate::verbose::STACK.get_or_insert_with(|| Vec::new());
             let len = stack.len();
             let last = stack.last_mut().unwrap();
             let elapsed = last.1.elapsed();
@@ -47,7 +44,8 @@ macro_rules! talk_about_time {
 macro_rules! stop_talking_about_time {
     () => {
         unsafe {
-            let stack = verbose::STACK.get_or_insert_with(|| Vec::new());
+            let stack =
+                crate::verbose::STACK.get_or_insert_with(|| Vec::new());
             let last = stack.pop().unwrap();
             let elapsed = last.2.elapsed();
             let len = stack.len();
