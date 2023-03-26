@@ -9,6 +9,7 @@ pub struct GitInfo {
     active_operation: super::ActiveOperation,
     branch: Option<String>,
     remote_branch_diff: Option<(usize, usize)>,
+    default_branch: Option<String>,
 }
 
 impl GitInfo {
@@ -127,6 +128,18 @@ impl GitInfo {
                 })
             });
         talk_about_time!("remote branch diff");
+
+        let default_branch = git
+            .find_reference("refs/remotes/origin/HEAD")
+            .ok()
+            .and_then(|r| r.resolve().ok())
+            .and_then(|r| {
+                r.shorthand()
+                    .map(|s| s.strip_prefix("origin/").unwrap_or(s))
+                    .map(String::from)
+            });
+        eprintln!("{:?}", default_branch);
+        talk_about_time!("default branch");
         stop_talking_about_time!();
 
         GitInfo {
@@ -137,6 +150,7 @@ impl GitInfo {
             active_operation,
             branch,
             remote_branch_diff,
+            default_branch,
         }
     }
 }
@@ -172,6 +186,10 @@ impl super::VcsInfo for GitInfo {
 
     fn remote_branch_diff(&self) -> Option<(usize, usize)> {
         self.remote_branch_diff
+    }
+
+    fn default_branch(&self) -> Option<String> {
+        self.default_branch.clone()
     }
 }
 

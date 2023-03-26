@@ -299,7 +299,7 @@ fn format_vcs(vcs_info: Option<&dyn vcs::VcsInfo>) -> Option<String> {
         let branch = vcs_info
             .branch()
             .map(|branch| {
-                if branch == "master" {
+                if Some(branch.clone()) == vcs_info.default_branch() {
                     String::new()
                 } else {
                     branch
@@ -456,6 +456,7 @@ mod test {
         active_operation: vcs::ActiveOperation,
         branch: Option<String>,
         remote_branch_diff: Option<(usize, usize)>,
+        default_branch: Option<String>,
     }
 
     impl vcs::VcsInfo for TestVcs {
@@ -482,6 +483,9 @@ mod test {
         }
         fn remote_branch_diff(&self) -> Option<(usize, usize)> {
             self.remote_branch_diff
+        }
+        fn default_branch(&self) -> Option<String> {
+            self.default_branch
         }
     }
 
@@ -605,6 +609,7 @@ mod test {
                 active_operation: vcs::ActiveOperation::None,
                 branch: Some(String::from("master")),
                 remote_branch_diff: Some((0, 0)),
+                default_branch: Some(String::from("master")),
             };
 
             assert_eq!(format_vcs(Some(&test_vcs)), Some(String::from("g")));
@@ -620,6 +625,7 @@ mod test {
                 active_operation: vcs::ActiveOperation::None,
                 branch: Some(String::from("dev")),
                 remote_branch_diff: Some((0, 0)),
+                default_branch: Some(String::from("master")),
             };
 
             assert_eq!(
@@ -638,6 +644,7 @@ mod test {
                 active_operation: vcs::ActiveOperation::None,
                 branch: Some(String::from("master")),
                 remote_branch_diff: None,
+                default_branch: Some(String::from("master")),
             };
 
             assert_eq!(
@@ -656,6 +663,7 @@ mod test {
                 active_operation: vcs::ActiveOperation::None,
                 branch: Some(String::from("dev")),
                 remote_branch_diff: None,
+                default_branch: Some(String::from("master")),
             };
 
             assert_eq!(
@@ -674,6 +682,7 @@ mod test {
                 active_operation: vcs::ActiveOperation::None,
                 branch: Some(String::from("master")),
                 remote_branch_diff: None,
+                default_branch: Some(String::from("master")),
             };
 
             assert_eq!(
@@ -692,6 +701,7 @@ mod test {
                 active_operation: vcs::ActiveOperation::None,
                 branch: Some(String::from("dev")),
                 remote_branch_diff: None,
+                default_branch: Some(String::from("master")),
             };
 
             assert_eq!(
@@ -710,6 +720,7 @@ mod test {
                 active_operation: vcs::ActiveOperation::None,
                 branch: None,
                 remote_branch_diff: None,
+                default_branch: Some(String::from("master")),
             };
 
             assert_eq!(format_vcs(Some(&test_vcs)), Some(String::from("g!")));
@@ -725,6 +736,7 @@ mod test {
                 active_operation: vcs::ActiveOperation::None,
                 branch: Some(String::from("master")),
                 remote_branch_diff: Some((2, 3)),
+                default_branch: Some(String::from("master")),
             };
 
             assert_eq!(

@@ -24,6 +24,7 @@ pub trait VcsInfo {
     fn active_operation(&self) -> ActiveOperation;
     fn branch(&self) -> Option<String>;
     fn remote_branch_diff(&self) -> Option<(usize, usize)>;
+    fn default_branch(&self) -> Option<String>;
 
     fn is_dirty(&self) -> bool {
         let diff = self.remote_branch_diff();
