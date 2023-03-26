@@ -6,32 +6,31 @@ pub struct CommandLineOptions {
 }
 
 pub fn parse() -> CommandLineOptions {
-    let matches = clap::App::new("fancy-prompt")
+    let matches = clap::Command::new("fancy-prompt")
         .about("Prints a fancy prompt")
-        .author(crate_authors!())
-        .version(crate_version!())
+        .author(clap::crate_authors!())
+        .version(clap::crate_version!())
         .arg(
-            clap::Arg::with_name("prompt-escape")
+            clap::Arg::new("prompt-escape")
                 .long("prompt-escape")
                 .value_name("SHELL")
-                .help("Produces escape sequence wrappers for the given shell")
-                .takes_value(true),
+                .help(
+                    "Produces escape sequence wrappers for the given shell",
+                ),
         )
         .arg(
-            clap::Arg::with_name("error-code")
+            clap::Arg::new("error-code")
                 .value_name("ERROR_CODE")
                 .help("The error code of the previously run command"),
         )
         .get_matches();
 
     let shell = matches
-        .value_of("prompt-escape")
-        .map(colors::ShellType::from_str)
+        .get_one::<String>("prompt-escape")
+        .map(|s| colors::ShellType::from_str(&s))
         .unwrap_or(colors::ShellType::Unknown);
-    let error_code = matches
-        .value_of("error-code")
-        .map(|code| code.parse().expect("error code must be a u8"))
-        .unwrap_or(0);
+    let error_code =
+        matches.get_one::<u8>("error-code").copied().unwrap_or(0);
 
     CommandLineOptions { shell, error_code }
 }

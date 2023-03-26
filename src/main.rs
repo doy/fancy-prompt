@@ -1,5 +1,4 @@
 extern crate chrono;
-#[macro_use]
 extern crate clap;
 extern crate git2;
 extern crate hostname;
@@ -50,7 +49,9 @@ mod tests {
             home: Some(std::path::PathBuf::from("/home/doy")),
             user: Some(String::from("doy")),
             is_root: false,
-            time: chrono::Local.ymd(2018, 5, 14).and_hms(17, 35, 45),
+            time: chrono::Local
+                .with_ymd_and_hms(2018, 5, 14, 17, 35, 45)
+                .unwrap(),
             power_info: power::PowerInfo::new(),
             vcs_info: None,
         };

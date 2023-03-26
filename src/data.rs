@@ -57,7 +57,8 @@ pub fn collect(opts: args::CommandLineOptions) -> PromptData {
 }
 
 fn hostname() -> Option<String> {
-    if let Some(mut name) = hostname::get_hostname() {
+    if let Ok(name) = hostname::get() {
+        let mut name = name.into_string().unwrap();
         if let Some(idx) = name.find('.') {
             name.truncate(idx);
         }
@@ -84,7 +85,7 @@ fn home() -> Option<std::path::PathBuf> {
 }
 
 fn user() -> Option<String> {
-    users::get_current_username()
+    users::get_current_username().map(|s| s.into_string().unwrap())
 }
 
 fn is_root() -> bool {

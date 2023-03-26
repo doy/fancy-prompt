@@ -16,19 +16,19 @@ impl GitInfo {
         start_talking_about_time!("git");
 
         let mut modified_statuses = git2::Status::empty();
-        modified_statuses.insert(git2::STATUS_WT_DELETED);
-        modified_statuses.insert(git2::STATUS_WT_MODIFIED);
-        modified_statuses.insert(git2::STATUS_WT_RENAMED);
-        modified_statuses.insert(git2::STATUS_WT_TYPECHANGE);
-        modified_statuses.insert(git2::STATUS_CONFLICTED);
+        modified_statuses.insert(git2::Status::WT_DELETED);
+        modified_statuses.insert(git2::Status::WT_MODIFIED);
+        modified_statuses.insert(git2::Status::WT_RENAMED);
+        modified_statuses.insert(git2::Status::WT_TYPECHANGE);
+        modified_statuses.insert(git2::Status::CONFLICTED);
         let mut staged_statuses = git2::Status::empty();
-        staged_statuses.insert(git2::STATUS_INDEX_DELETED);
-        staged_statuses.insert(git2::STATUS_INDEX_MODIFIED);
-        staged_statuses.insert(git2::STATUS_INDEX_NEW);
-        staged_statuses.insert(git2::STATUS_INDEX_RENAMED);
-        staged_statuses.insert(git2::STATUS_INDEX_TYPECHANGE);
+        staged_statuses.insert(git2::Status::INDEX_DELETED);
+        staged_statuses.insert(git2::Status::INDEX_MODIFIED);
+        staged_statuses.insert(git2::Status::INDEX_NEW);
+        staged_statuses.insert(git2::Status::INDEX_RENAMED);
+        staged_statuses.insert(git2::Status::INDEX_TYPECHANGE);
         let mut new_statuses = git2::Status::empty();
-        new_statuses.insert(git2::STATUS_WT_NEW);
+        new_statuses.insert(git2::Status::WT_NEW);
         talk_about_time!("status bitsets");
 
         let mut status_options = git2::StatusOptions::new();
