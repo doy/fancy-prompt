@@ -1,5 +1,10 @@
 # Changes
 
+## 0.3.0
+
+* Rerelease because apparently 0.2.0 and 0.2.1 were already released from
+  somewhere?
+
 ## 0.2.0
 
 * Handle USB power sources
