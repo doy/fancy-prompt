@@ -138,7 +138,6 @@ impl GitInfo {
                     .map(|s| s.strip_prefix("origin/").unwrap_or(s))
                     .map(String::from)
             });
-        eprintln!("{:?}", default_branch);
         talk_about_time!("default branch");
         stop_talking_about_time!();
 
