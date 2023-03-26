@@ -12,7 +12,7 @@ pub struct PromptData {
     pub home: Option<std::path::PathBuf>,
     pub user: Option<String>,
     pub is_root: bool,
-    pub time: chrono::DateTime<chrono::Local>,
+    pub time: time::OffsetDateTime,
     pub power_info: power::PowerInfo,
     pub vcs_info: Option<Box<dyn vcs::VcsInfo>>,
 }
@@ -92,8 +92,8 @@ fn is_root() -> bool {
     users::get_current_uid() == 0
 }
 
-fn time() -> chrono::DateTime<chrono::Local> {
-    chrono::Local::now()
+fn time() -> time::OffsetDateTime {
+    time::OffsetDateTime::now_local().unwrap()
 }
 
 fn power_info() -> power::PowerInfo {

@@ -15,13 +15,13 @@ is-it-maintained-open-issues = { repository = "doy/fancy-prompt" }
 maintenance = { status = "experimental" }
 
 [dependencies]
-chrono = "0.4"
 clap = { version = "4.1", features = ["wrap_help", "cargo"] }
 git2 = "0.16"
 hostname = "0.3"
 regex = "1.7"
 term = "0.7"
 terminal_size = "0.2.5"
+time = { version = "0.3.20", features = ["local-offset", "formatting"] }
 users = "0.11"
 walkdir = "2.3"
 

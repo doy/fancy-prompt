@@ -181,11 +181,14 @@ impl Prompt {
         &self,
         t: &mut dyn term::Terminal<Output = W>,
     ) {
+        let desc =
+            time::format_description::parse("[hour]:[minute]:[second]")
+                .unwrap();
         self.print_host(t, "[");
         self.colors.print(
             t,
             "default",
-            &format!("{}", self.data.time.format("%H:%M:%S")),
+            &self.data.time.format(&desc).unwrap(),
         );
         self.print_host(t, "]");
     }
