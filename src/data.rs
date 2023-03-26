@@ -1,3 +1,5 @@
+use std::os::fd::AsRawFd as _;
+
 use crate::args;
 use crate::colors;
 use crate::power;
@@ -69,11 +71,16 @@ fn hostname() -> Option<String> {
 }
 
 fn terminal_cols() -> Option<usize> {
-    if let Some((w, _h)) = terminal_size::terminal_size() {
-        Some(usize::from(w.0))
-    } else {
-        None
+    for fd in [
+        std::io::stdout().as_raw_fd(),
+        std::io::stderr().as_raw_fd(),
+        std::io::stdin().as_raw_fd(),
+    ] {
+        if let Some((w, _h)) = terminal_size::terminal_size_using_fd(fd) {
+            return Some(usize::from(w.0));
+        }
     }
+    None
 }
 
 fn pwd() -> Option<std::path::PathBuf> {

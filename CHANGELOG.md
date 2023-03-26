@@ -1,5 +1,9 @@
 # Changes
 
+## 0.3.1
+
+* Fix getting the correct terminal size when redirecting output
+
 ## 0.3.0
 
 * Rerelease because apparently 0.2.0 and 0.2.1 were already released from
