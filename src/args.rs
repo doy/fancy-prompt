@@ -28,7 +28,7 @@ pub fn parse() -> CommandLineOptions {
 
     let shell = matches
         .get_one::<String>("prompt-escape")
-        .map(|s| colors::ShellType::from_str(&s))
+        .map(|s| colors::ShellType::from_str(s))
         .unwrap_or(colors::ShellType::Unknown);
     let error_code =
         matches.get_one::<u8>("error-code").copied().unwrap_or(0);
