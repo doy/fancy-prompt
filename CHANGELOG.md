@@ -1,5 +1,10 @@
 # Changes
 
+## 0.2.0
+
+* Handle USB power sources
+* Don't assume that the default branch is always named master
+
 ## 0.1.5
 
 * Strip off everything past a '.' in the hostname (OSX puts extra confusing
