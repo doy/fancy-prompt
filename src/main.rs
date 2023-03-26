@@ -44,7 +44,9 @@ mod tests {
             error_code: 0,
             hostname: Some(String::from("hush")),
             terminal_cols: Some(80),
-            pwd: Some(std::path::PathBuf::from("/home/doy/coding/fancy-prompt")),
+            pwd: Some(std::path::PathBuf::from(
+                "/home/doy/coding/fancy-prompt",
+            )),
             home: Some(std::path::PathBuf::from("/home/doy")),
             user: Some(String::from("doy")),
             is_root: false,

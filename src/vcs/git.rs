@@ -38,8 +38,7 @@ impl GitInfo {
         if true {
             // XXX
             status_options.update_index(true);
-        }
-        else {
+        } else {
             status_options.update_index(false);
             status_options.no_refresh(true);
         }
@@ -73,8 +72,7 @@ impl GitInfo {
         let branch = head.ok().and_then(|head| {
             if head.is_branch() {
                 head.shorthand().map(|s| s.to_string())
-            }
-            else {
+            } else {
                 head.resolve().ok().and_then(|head| head.target()).map(
                     |oid| {
                         let mut sha = String::new();
@@ -109,16 +107,10 @@ impl GitInfo {
         };
         talk_about_time!("active operation");
 
-        let remote_branch_diff = git.head()
+        let remote_branch_diff = git
+            .head()
             .ok()
-            .and_then(|head| {
-                if head.is_branch() {
-                    Some(head)
-                }
-                else {
-                    None
-                }
-            })
+            .and_then(|head| if head.is_branch() { Some(head) } else { None })
             .and_then(|head| head.resolve().ok())
             .map(|head| {
                 (head.target(), head.shorthand().map(|s| s.to_string()))
@@ -128,11 +120,11 @@ impl GitInfo {
                     name.and_then(|name| {
                         git.refname_to_id(
                             &(String::from("refs/remotes/origin/") + &name),
-                        ).ok()
-                            .and_then(|remote_id| {
-                                git.graph_ahead_behind(head_id, remote_id)
-                                    .ok()
-                            })
+                        )
+                        .ok()
+                        .and_then(|remote_id| {
+                            git.graph_ahead_behind(head_id, remote_id).ok()
+                        })
                     })
                 })
             });
@@ -195,8 +187,7 @@ pub fn detect() -> Option<Box<dyn super::VcsInfo>> {
 
     if let Some(git) = git {
         Some(Box::new(GitInfo::new(&git)))
-    }
-    else {
+    } else {
         None
     }
 }

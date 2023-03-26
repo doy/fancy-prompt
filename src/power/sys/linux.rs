@@ -18,10 +18,11 @@ pub fn power_supplies() -> Vec<super::PowerSupplyInfo> {
         let ty = super::super::slurp(entry.path().join("type"))
             .map(|t: String| super::PowerSupplyType::from_str(&t))
             .expect("couldn't find power supply type");
-        let energy_full = super::super::slurp(entry.path().join("energy_full"));
+        let energy_full =
+            super::super::slurp(entry.path().join("energy_full"));
         let energy_now = super::super::slurp(entry.path().join("energy_now"));
-        let online =
-            super::super::slurp(entry.path().join("online")).map(|n: u8| n != 0);
+        let online = super::super::slurp(entry.path().join("online"))
+            .map(|n: u8| n != 0);
 
         power_supplies.push(super::PowerSupplyInfo {
             name,

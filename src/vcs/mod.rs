@@ -27,9 +27,12 @@ pub trait VcsInfo {
 
     fn is_dirty(&self) -> bool {
         let diff = self.remote_branch_diff();
-        self.has_modified_files() || self.has_staged_files()
-            || self.has_new_files() || !diff.is_some()
-            || diff.map(|(local, remote)| local > 0 || remote > 0)
+        self.has_modified_files()
+            || self.has_staged_files()
+            || self.has_new_files()
+            || !diff.is_some()
+            || diff
+                .map(|(local, remote)| local > 0 || remote > 0)
                 .unwrap_or(false)
     }
 
@@ -41,8 +44,7 @@ pub trait VcsInfo {
 pub fn detect() -> Option<Box<dyn VcsInfo>> {
     if let Some(git) = git::detect() {
         Some(git)
-    }
-    else {
+    } else {
         None
     }
 }

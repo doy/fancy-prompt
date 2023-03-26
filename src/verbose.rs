@@ -2,11 +2,13 @@
 use std;
 
 #[cfg(feature = "verbose")]
-pub static mut STACK: Option<Vec<(String, std::time::Instant, std::time::Instant)>> = None;
+pub static mut STACK: Option<
+    Vec<(String, std::time::Instant, std::time::Instant)>,
+> = None;
 
 #[cfg(feature = "verbose")]
 macro_rules! start_talking_about_time {
-    ($category:expr) => (
+    ($category:expr) => {
         use std;
         use verbose;
         unsafe {
@@ -17,12 +19,12 @@ macro_rules! start_talking_about_time {
             stack.push((String::from(category), now.clone(), now.clone()));
             eprintln!("{}starting {}", " ".repeat(len), category);
         }
-    )
+    };
 }
 
 #[cfg(feature = "verbose")]
 macro_rules! talk_about_time {
-    ($what:expr) => (
+    ($what:expr) => {
         unsafe {
             let stack = verbose::STACK.get_or_insert_with(|| Vec::new());
             let len = stack.len();
@@ -38,12 +40,12 @@ macro_rules! talk_about_time {
             );
             last.1 = std::time::Instant::now();
         }
-    )
+    };
 }
 
 #[cfg(feature = "verbose")]
 macro_rules! stop_talking_about_time {
-    () => (
+    () => {
         unsafe {
             let stack = verbose::STACK.get_or_insert_with(|| Vec::new());
             let last = stack.pop().unwrap();
@@ -57,20 +59,20 @@ macro_rules! stop_talking_about_time {
                 elapsed.subsec_nanos()
             );
         }
-    )
+    };
 }
 
 #[cfg(not(feature = "verbose"))]
 macro_rules! start_talking_about_time {
-    ($e:expr) => ()
+    ($e:expr) => {};
 }
 
 #[cfg(not(feature = "verbose"))]
 macro_rules! talk_about_time {
-    ($e:expr) => ()
+    ($e:expr) => {};
 }
 
 #[cfg(not(feature = "verbose"))]
 macro_rules! stop_talking_about_time {
-    () => ()
+    () => {};
 }

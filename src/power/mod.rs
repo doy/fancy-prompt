@@ -15,9 +15,7 @@ impl PowerInfo {
     pub fn new() -> PowerInfo {
         let power_supplies = sys::power_supplies();
 
-        PowerInfo {
-            power_supplies,
-        }
+        PowerInfo { power_supplies }
     }
 
     pub fn battery_usage(&self) -> Option<f64> {
@@ -26,22 +24,19 @@ impl PowerInfo {
         for battery in self.batteries() {
             if let Some(now) = battery.energy_now {
                 total_now += now;
-            }
-            else {
+            } else {
                 return None;
             }
             if let Some(full) = battery.energy_full {
                 total_full += full;
-            }
-            else {
+            } else {
                 return None;
             }
         }
 
         if total_full > 0 {
             Some((total_now as f64) / (total_full as f64))
-        }
-        else {
+        } else {
             None
         }
     }
@@ -59,13 +54,13 @@ impl PowerInfo {
         self.batteries().count() > 0
     }
 
-    fn batteries(&self) -> impl Iterator<Item=&sys::PowerSupplyInfo> {
+    fn batteries(&self) -> impl Iterator<Item = &sys::PowerSupplyInfo> {
         self.power_supplies
             .iter()
             .filter(|p| p.ty == sys::PowerSupplyType::Battery)
     }
 
-    fn mains(&self) -> impl Iterator<Item=&sys::PowerSupplyInfo> {
+    fn mains(&self) -> impl Iterator<Item = &sys::PowerSupplyInfo> {
         self.power_supplies
             .iter()
             .filter(|p| p.ty == sys::PowerSupplyType::AC)

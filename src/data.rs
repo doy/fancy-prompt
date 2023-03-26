@@ -62,8 +62,7 @@ fn hostname() -> Option<String> {
             name.truncate(idx);
         }
         Some(name)
-    }
-    else {
+    } else {
         None
     }
 }
@@ -71,8 +70,7 @@ fn hostname() -> Option<String> {
 fn terminal_cols() -> Option<usize> {
     if let Some((w, _h)) = term_size::dimensions() {
         Some(w)
-    }
-    else {
+    } else {
         None
     }
 }

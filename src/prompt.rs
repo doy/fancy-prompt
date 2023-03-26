@@ -17,25 +17,24 @@ pub struct Prompt {
 impl Prompt {
     pub fn new(data: data::PromptData) -> Prompt {
         let colors = colors::Colors::new(data.shell.clone());
-        Prompt {
-            colors,
-            data,
-        }
+        Prompt { colors, data }
     }
 
     pub fn display<W: std::io::Write>(&self, w: W) {
         let mut t = term::TerminfoTerminal::new(w).unwrap();
 
-        let user =
-            self.data.user
-                .as_ref()
-                .map(String::as_ref)
-                .unwrap_or_else(|| "???");
-        let host =
-            self.data.hostname
-                .as_ref()
-                .map(String::as_ref)
-                .unwrap_or_else(|| "???");
+        let user = self
+            .data
+            .user
+            .as_ref()
+            .map(String::as_ref)
+            .unwrap_or_else(|| "???");
+        let host = self
+            .data
+            .hostname
+            .as_ref()
+            .map(String::as_ref)
+            .unwrap_or_else(|| "???");
 
         let max_vcs_len = 20; // "g*+?:mybr...nch:+1-1"
         let vcs = self.format_vcs();
@@ -57,13 +56,14 @@ impl Prompt {
             - user.len() - 1 - host.len()     // "doy@lance"
             - 1                               // " "
             - 10                              // "[19:40:50]"
-            - 1;                              // " "
+            - 1; // " "
         if self.data.power_info.has_batteries() {
             max_path_len -= battery_len + 2   // "{<=========}"
-                + 1;                          // " "
+                + 1; // " "
         }
 
-        if max_path_len < 10 {                // "~/a/...cde"
+        if max_path_len < 10 {
+            // "~/a/...cde"
             panic!(
                 "terminal too small (need at least {} cols)",
                 cols + 10 - max_path_len
@@ -113,7 +113,7 @@ impl Prompt {
 
     fn display_path<W: std::io::Write>(
         &self,
-        t: &mut dyn term::Terminal<Output=W>,
+        t: &mut dyn term::Terminal<Output = W>,
         path: &str,
         path_color: &str,
         vcs: Option<&str>,
@@ -130,16 +130,16 @@ impl Prompt {
 
     fn display_border<W: std::io::Write>(
         &self,
-        t: &mut dyn term::Terminal<Output=W>,
-        len: usize
+        t: &mut dyn term::Terminal<Output = W>,
+        len: usize,
     ) {
         self.colors.print(t, "default", &"-".repeat(len));
     }
 
     fn display_battery<W: std::io::Write>(
         &self,
-        t: &mut dyn term::Terminal<Output=W>,
-        len: usize
+        t: &mut dyn term::Terminal<Output = W>,
+        len: usize,
     ) {
         self.print_host(t, "{");
         if let Some(battery_usage) = self.data.power_info.battery_usage() {
@@ -153,17 +153,18 @@ impl Prompt {
             if len >= filled {
                 if charging {
                     self.colors.print(t, "battery_charging", "<");
-                }
-                else {
+                } else {
                     self.colors.print(t, color, ">");
                 }
             }
             if filled > 1 {
-                self.colors
-                    .print(t, "battery_charging", &"=".repeat(filled - 1));
+                self.colors.print(
+                    t,
+                    "battery_charging",
+                    &"=".repeat(filled - 1),
+                );
             }
-        }
-        else {
+        } else {
             self.colors.print(t, "error", &"?".repeat(len));
         }
         self.print_host(t, "}");
@@ -171,7 +172,7 @@ impl Prompt {
 
     fn display_identity<W: std::io::Write>(
         &self,
-        t: &mut dyn term::Terminal<Output=W>,
+        t: &mut dyn term::Terminal<Output = W>,
         user: &str,
         host: &str,
     ) {
@@ -182,7 +183,7 @@ impl Prompt {
 
     fn display_time<W: std::io::Write>(
         &self,
-        t: &mut dyn term::Terminal<Output=W>,
+        t: &mut dyn term::Terminal<Output = W>,
     ) {
         self.print_host(t, "[");
         self.colors.print(
@@ -195,31 +196,25 @@ impl Prompt {
 
     fn display_error_code<W: std::io::Write>(
         &self,
-        t: &mut dyn term::Terminal<Output=W>,
+        t: &mut dyn term::Terminal<Output = W>,
     ) {
         let error_code_color = if self.data.error_code == 0 {
             "default"
-        }
-        else {
+        } else {
             "error"
         };
         self.colors.print(
             t,
             error_code_color,
-            &format!("{:03}", self.data.error_code)
+            &format!("{:03}", self.data.error_code),
         );
     }
 
     fn display_prompt<W: std::io::Write>(
         &self,
-        t: &mut dyn term::Terminal<Output=W>,
+        t: &mut dyn term::Terminal<Output = W>,
     ) {
-        let prompt = if self.data.is_root {
-            "#"
-        }
-        else {
-            "$"
-        };
+        let prompt = if self.data.is_root { "#" } else { "$" };
         self.print_user(t, prompt);
     }
 
@@ -233,16 +228,16 @@ impl Prompt {
 
     fn print_host<W: std::io::Write>(
         &self,
-        t: &mut dyn term::Terminal<Output=W>,
-        text: &str
+        t: &mut dyn term::Terminal<Output = W>,
+        text: &str,
     ) {
         self.colors.print_host(t, self.hostname(), text);
     }
 
     fn print_user<W: std::io::Write>(
         &self,
-        t: &mut dyn term::Terminal<Output=W>,
-        text: &str
+        t: &mut dyn term::Terminal<Output = W>,
+        text: &str,
     ) {
         self.colors.print_user(t, self.user(), text);
     }
@@ -259,35 +254,27 @@ impl Prompt {
 fn battery_discharge_color(usage: f64, charging: bool) -> &'static str {
     if usage >= 0.8 {
         "battery_full"
-    }
-    else if charging {
+    } else if charging {
         "default"
-    }
-    else if usage >= 0.4 {
+    } else if usage >= 0.4 {
         "default"
-    }
-    else if usage >= 0.15 {
+    } else if usage >= 0.15 {
         "battery_warn"
-    }
-    else if usage >= 0.05 {
+    } else if usage >= 0.05 {
         "battery_crit"
-    }
-    else {
+    } else {
         "battery_emerg"
     }
 }
 
 fn path_color(path: Option<&std::path::Path>) -> String {
     path.as_ref()
-        .map(|path| {
-            match sys::path_writable(path) {
-                sys::PathWritability::Writable
-                    => String::from("default"),
-                sys::PathWritability::NotWritable
-                    => String::from("path_not_writable"),
-                sys::PathWritability::NotExist
-                    => String::from("path_not_exist"),
+        .map(|path| match sys::path_writable(path) {
+            sys::PathWritability::Writable => String::from("default"),
+            sys::PathWritability::NotWritable => {
+                String::from("path_not_writable")
             }
+            sys::PathWritability::NotExist => String::from("path_not_exist"),
         })
         .unwrap_or_else(|| String::from("path_not_exist"))
 }
@@ -317,8 +304,7 @@ fn format_vcs(vcs_info: Option<&dyn vcs::VcsInfo>) -> Option<String> {
             .map(|branch| {
                 if branch == "master" {
                     String::new()
-                }
-                else {
+                } else {
                     branch
                 }
             })
@@ -338,8 +324,7 @@ fn format_vcs(vcs_info: Option<&dyn vcs::VcsInfo>) -> Option<String> {
             if remote > 0 {
                 write!(vcs, "-{}", remote).unwrap();
             }
-        }
-        else {
+        } else {
             write!(vcs, ":-").unwrap();
         }
 
@@ -360,11 +345,9 @@ fn vcs_color(vcs_info: Option<&dyn vcs::VcsInfo>) -> String {
         .map(|vcs_info| {
             if vcs_info.is_error() {
                 String::from("vcs_error")
-            }
-            else if vcs_info.is_dirty() {
+            } else if vcs_info.is_dirty() {
                 String::from("vcs_dirty")
-            }
-            else {
+            } else {
                 String::from("default")
             }
         })
@@ -387,7 +370,8 @@ where
             let home_str = home.as_ref().to_string_lossy().into_owned();
             let home_re = regex::Regex::new(
                 &(String::from(r"^") + &regex::escape(&home_str)),
-            ).unwrap();
+            )
+            .unwrap();
 
             path_str = home_re.replace(&path_str, "~").into_owned();
         }
@@ -404,13 +388,13 @@ where
         }
 
         if path_str.len() > len {
-            path_str = String::from(&path_str[..len - 6]) + "..."
+            path_str = String::from(&path_str[..len - 6])
+                + "..."
                 + &path_str[path_str.len() - 3..]
         }
 
         path_str
-    }
-    else {
+    } else {
         String::from("???")
     }
 }
@@ -422,22 +406,24 @@ fn compress_vcs(vcs: &str, len: usize) -> String {
         vcs_parts_re
             .captures(vcs)
             .map(|cap| {
-                let prefix_len = cap.get(1)
+                let prefix_len = cap
+                    .get(1)
                     .map(|mat| mat.end() - mat.start() + 1)
                     .unwrap_or(0);
-                let suffix_len = cap.get(2)
+                let suffix_len = cap
+                    .get(2)
                     .map(|mat| mat.end() - mat.start() + 1)
                     .unwrap_or(0);
                 let branch_len = len - prefix_len - suffix_len;
                 let branch_re = regex::Regex::new(&format!(
                     r"(:[^:]{{{}}})[^:]*([^:]{{3}}:?)",
                     (branch_len - 6).to_string()
-                )).unwrap();
+                ))
+                .unwrap();
                 branch_re.replace(vcs, "$1...$2").into_owned()
             })
             .unwrap_or_else(|| vcs.to_string())
-    }
-    else {
+    } else {
         vcs.to_string()
     }
 }

@@ -1,5 +1,5 @@
-use users;
 use std;
+use users;
 
 use std::os::unix::fs::MetadataExt;
 use std::os::unix::fs::PermissionsExt;
@@ -16,17 +16,13 @@ pub fn path_writable(path: &std::path::Path) -> super::PathWritability {
 
             if euid == 0 {
                 super::PathWritability::Writable
-            }
-            else if (file_uid == euid) && (file_mode & 0o200 != 0) {
+            } else if (file_uid == euid) && (file_mode & 0o200 != 0) {
                 super::PathWritability::Writable
-            }
-            else if (file_gid == egid) && (file_mode & 0o020 != 0) {
+            } else if (file_gid == egid) && (file_mode & 0o020 != 0) {
                 super::PathWritability::Writable
-            }
-            else if file_mode & 0o002 != 0 {
+            } else if file_mode & 0o002 != 0 {
                 super::PathWritability::Writable
-            }
-            else {
+            } else {
                 super::PathWritability::NotWritable
             }
         })
